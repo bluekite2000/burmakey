@@ -7,4 +7,5 @@ mm_data.pkl
 weblex_my.txt
 # competitor APKs pulled for benchmarking — not ours to redistribute
 apks/
+*.log
 __pycache__/

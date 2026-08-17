@@ -226,6 +226,37 @@ the keyboard slower.
 
 Reproduce: `python3 src/longrun.py` (seed 20260817, ~90s).
 
+
+### Whole-corpus taps, every topic (measured keymap + arithmetic)
+
+Both competitors were driven on a running emulator and neither offers word
+prediction, so their cost is deterministic given the keymap. The keymap was
+probed on the live app (tap / long-press / shift for every key position):
+62 glyphs, **99.65% coverage** of corpus glyph instances, making **90.9% of
+sentences fully typable** — versus 12% under the partial keymap earlier
+figures used, which is why those figures were biased toward longer words.
+
+| | taps/word |
+|---|---|
+| Bagan / TTKeyboard, character entry | **4.08** |
+| BurmaKey, Burglish + ranker | **2.44** |
+| difference | **−40.1%** |
+
+27,181 sentences, 188,670 words, both systems on identical text. Per topic
+(k-means, 10 clusters) the difference ranges **−34.8% to −43.1%** and never
+flips; Bagan's own cost varies more by topic (3.66–4.60) than the advantage
+does. Shift-page glyphs are negligible (0.05%); the layer that matters is
+long-press at 9.2%.
+
+**TTKeyboard was measured too.** Its Myanmar layout is 11 columns, space bar
+reads "ZawCode". Typing produces no word candidates — same as Bagan — even
+though the app is an AOSP LatinIME derivative that ships a suggestion strip
+(it offers only a contact-names prompt for Burmese). Both emit U+200B with
+standalone combining vowels. Character entry is therefore the right model for
+both, which is why the arm is labelled "Bagan / TTKeyboard".
+
+Reproduce: `probe_keymap.py`, `measure_bagan.py`, `corpus_taps.py`.
+
 ## Chat-register simulation and the try-it web keyboard
 
 myPOS is news register; a simulated chat stream (600 messages, 3,308 words

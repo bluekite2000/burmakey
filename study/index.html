@@ -821,6 +821,46 @@ seed 20260817, ~90s). These are engine mechanics measured on resampled
 corpus text — they say nothing about how real people behave, and the
 perfect-typist assumption from the earlier sections still applies throughout.</p>
 
+<h3>Every topic, every sentence — the taps side, measured</h3>
+<p>Because the competitors offer no word prediction — verified on both running
+apps — their cost is a deterministic function of the text: one tap per
+base-layer glyph, one long-press for a second-layer glyph, and no per-word
+commit tap. So once the keymap is known, taps can be computed exactly for the
+whole corpus rather than sampled by an overnight typing run.</p>
+<p>The keymap was probed on the live app (tap, long-press and shift for every
+key position), giving <b>99.65% glyph coverage</b> — <b>27,181 sentences,
+188,670 words, 90.9% of the corpus</b>, against 12% under the partial keymap
+that earlier figures used.</p>
+
+<figure class="chart">
+<figcaption>Taps per word, whole corpus, by topic</figcaption>
+<p class="csub">Topics derived by k-means over the same sentences. Both systems
+scored on identical text. Lower is better.</p>
+<div class="scroll-x">
+<table>
+<thead><tr><th>Topic cluster</th><th>Words</th><th>Bagan / TTKeyboard</th>
+<th>BurmaKey</th><th>Difference</th></tr></thead>
+<tbody><tr><td>topic 9</td><td>38,600</td><td>4.23</td><td>2.48</td><td>-41.4%</td></tr><tr><td>topic 6</td><td>28,005</td><td>4.07</td><td>2.32</td><td>-43.0%</td></tr><tr><td>topic 0</td><td>21,986</td><td>3.84</td><td>2.25</td><td>-41.4%</td></tr><tr><td>topic 3</td><td>21,477</td><td>3.66</td><td>2.39</td><td>-34.7%</td></tr><tr><td>topic 7</td><td>20,983</td><td>4.60</td><td>2.85</td><td>-38.0%</td></tr><tr><td>topic 8</td><td>17,470</td><td>3.88</td><td>2.32</td><td>-40.2%</td></tr><tr><td>topic 4</td><td>14,545</td><td>4.21</td><td>2.40</td><td>-43.0%</td></tr><tr><td>topic 5</td><td>11,586</td><td>4.13</td><td>2.45</td><td>-40.7%</td></tr><tr><td>topic 1</td><td>8,472</td><td>3.85</td><td>2.50</td><td>-35.1%</td></tr><tr><td>topic 2</td><td>5,546</td><td>4.16</td><td>2.61</td><td>-37.3%</td></tr><tr><td><b>All</b></td><td><b>188,670</b></td>
+<td><b>4.08</b></td><td><b>2.44</b></td><td><b>−40.1%</b></td></tr>
+</tbody></table></div>
+</figure>
+
+<div class="callout">
+<p><b>The taps advantage is settled, and it holds everywhere.</b> Across all
+ten topic clusters it ranges from <b>−34.8% to −43.1%</b> — it never flips, and
+never falls below a third. Bagan&rsquo;s own cost varies more by topic
+(3.66–4.60 taps/word) than the advantage does.</p>
+<p><b>What is still not settled is time.</b> The seconds-per-word headline
+prices candidate-scan and Fitts movement from literature-shaped constants, and
+automated taps contain no human. That figure stays a swept range until real
+people type on it. More simulated typing cannot close that gap — it is bias,
+not sampling error.</p>
+</div>
+
+<p class="sub">Reproduce: <code>python3 src/probe_keymap.py</code> (probe a
+running install), <code>src/measure_bagan.py</code> (type and verify on the
+app), <code>python3 src/corpus_taps.py</code> (whole-corpus arithmetic).</p>
+
 <h2>Method</h2>
 <p>myG2P provides 24,802 words with tone-marked romanizations. Mining its
 syllable alignments yields a 2,348-entry syllable→roman map plus a rule

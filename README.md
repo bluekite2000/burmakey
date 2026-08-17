@@ -35,7 +35,12 @@ Zawgyi/Unicode split.
   competitor's layout, layer assignment, lack of word prediction and real
   taps-per-word all **measured on a Bagan v14.62 install** — every key probed,
   15 held-out sentences typed on the app and verified character-for-character.
-  Measurement moved the headline from −38.6% (assumed) to −31.7%. Against Bagan
+  Measurement moved the headline from −38.6% (assumed) to −31.7%. On **taps**
+  the comparison is now exhaustive rather than sampled: with the probed keymap
+  at 99.65% glyph coverage, both systems were scored on **188,670 words across
+  27,181 sentences and all 10 topic clusters** — **4.08 vs 2.44 taps/word,
+  −40.1%**, ranging −34.8% to −43.1% by topic and never flipping. TTKeyboard
+  was measured the same way and also offers no Burmese word prediction. Against Bagan
   as it actually behaves, BurmaKey is **~32% faster** (30 → 44 wpm). Against a
   hypothetical Bagan carrying this exact engine over script keys it is
   **3–5% slower**, consistently across an 81-point sensitivity sweep — script
