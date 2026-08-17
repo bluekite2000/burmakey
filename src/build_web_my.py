@@ -38,16 +38,29 @@ transition:transform .14s ease-out}
 
 h1{font-size:20px;margin:0}
 .sub{color:var(--dim);font-size:13px;margin:0}
-.msg{background:var(--pan);border:1px solid var(--ln);border-radius:14px;
-min-height:110px;padding:12px 14px;font-size:20px;line-height:2;word-break:break-word;
+/* the "thread": short by default, grows to a ceiling, then scrolls, so it
+   can never push the input off the screen */
+.msgwrap{position:relative}
+.msg{background:var(--pan);border:1px solid var(--ln);border-radius:13px;
+min-height:58px;max-height:min(30vh,220px);overflow-y:auto;
+overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+padding:11px 13px;font-size:19px;line-height:1.85;word-break:break-word;
 -webkit-user-select:text;user-select:text}
+/* undo / clear ride on top of the message, so they cost no layout height and
+   stay out of the way until there is something to act on */
+.msgacts{position:absolute;top:7px;right:7px;display:flex;gap:6px;
+opacity:0;visibility:hidden;transition:opacity .12s}
+.msgwrap.has .msgacts{opacity:1;visibility:visible}
+.msgacts .ico{flex:0 0 auto;width:44px;height:44px;min-height:44px;padding:0;
+font-size:16px;border-radius:11px;background:rgba(13,16,21,.92);
+-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .msg .rom{display:block;font-size:11px;color:#7ea7d8;
 font-family:ui-monospace,Menlo,monospace;margin-top:6px;word-break:break-all}
 .msg:empty::before{content:"သင့်စာသား ဒီမှာပေါ်မယ် · your message appears here";
-color:#454d5c;font-size:14px}
+color:#454d5c;font-size:13.5px;line-height:1.5}
 
 /* ---- candidate bar: horizontal, momentum, never leaks its scroll to the page ---- */
-.bar{display:flex;gap:7px;align-items:stretch;min-height:62px;padding:1px 0;
+.bar{display:flex;gap:7px;align-items:stretch;min-height:62px;padding:1px 0 0;
 overflow-x:auto;overflow-y:hidden;
 overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
 scroll-snap-type:x proximity;scrollbar-width:none}
@@ -75,12 +88,20 @@ input[type=text]{width:100%;background:var(--pan);border:1px solid var(--acc);
 border-radius:12px;color:var(--acc);font:18px ui-monospace,Menlo,monospace;
 padding:14px;min-height:54px;outline:none;-webkit-appearance:none;appearance:none}
 input::placeholder{color:#3d4757;font-family:inherit}
-.row{display:flex;gap:8px}
+/* one compose row: input + the round primary, WhatsApp-style */
+.composerow{display:flex;gap:8px;align-items:center}
+.composerow input{flex:1 1 auto;min-width:0}
+.send{flex:0 0 54px;width:54px;height:54px;min-height:54px;padding:0;
+border-radius:50%;font-size:21px;background:var(--acc);color:#08101c;
+border-color:var(--acc);font-weight:600;display:flex;
+align-items:center;justify-content:center}
 button{flex:1;background:var(--pan);border:1px solid var(--ln);color:var(--ink);
-border-radius:11px;padding:12px 8px;font-size:14px;cursor:pointer;font-family:inherit;
-min-height:48px;touch-action:manipulation;
+border-radius:11px;padding:10px 8px;font-size:14px;cursor:pointer;font-family:inherit;
+min-height:44px;line-height:1.25;touch-action:manipulation;
 -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 button:active{background:var(--ln)}
+.send:active{background:#4b8ae0;border-color:#4b8ae0}
+button[disabled]{opacity:.35;pointer-events:none}
 button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 button.pri{background:var(--acc);color:#08101c;border-color:var(--acc);font-weight:600}
 .stats{font-size:11.5px;color:var(--dim);font-family:ui-monospace,Menlo,monospace}
@@ -113,7 +134,6 @@ type Burmese with English letters</span></h1>
 <p class="sub">Burglish ရိုက်နေကျအတိုင်း ရိုက်ပါ — အသံထွက်အတိုင်း — မှန်တဲ့စာလုံးကို နှိပ်ပါ
 · type Burglish the way it sounds, tap the right word, get real Burmese</p>
 
-<div class="msg" id="msg"></div>
 <div class="stats" id="stats"></div>
 <label><input type="checkbox" id="showrom">show Burglish under words</label>
 
@@ -153,15 +173,23 @@ CC BY-NC-SA 4.0 — this tool is free and noncommercial)
 </div>
 </div>
 <div class="composer" id="composer">
- <div class="bar" id="bar"><span class="hint">စရိုက်ပါ — try: nay kaung la</span></div>
- <input type="text" id="inp" autocomplete="off" autocorrect="off"
-  autocapitalize="none" spellcheck="false" inputmode="text" enterkeyhint="next"
-  placeholder="ဒီမှာရိုက်ပါ · type here (a-z)">
- <div class="row">
-  <button onclick="undo()">↩ ပြန်ဖျက် · undo</button>
-  <button onclick="clearAll()">✕ ရှင်း · clear</button>
-  <button class="pri" onclick="copyMsg()" id="cpy">⧉ ကူးယူ · copy</button>
+ <div class="msgwrap" id="msgwrap">
+  <div class="msg" id="msg"></div>
+  <div class="msgacts">
+   <button class="ico" id="undobtn" onclick="undo()"
+    aria-label="ပြန်ဖျက် · undo last word" title="ပြန်ဖျက် · undo">↩</button>
+   <button class="ico" id="clrbtn" onclick="clearAll()"
+    aria-label="ရှင်း · clear the whole message" title="ရှင်း · clear">✕</button>
+  </div>
  </div>
+ <div class="composerow">
+  <input type="text" id="inp" autocomplete="off" autocorrect="off"
+   autocapitalize="none" spellcheck="false" inputmode="text" enterkeyhint="next"
+   placeholder="ဒီမှာရိုက်ပါ · type here (a-z)">
+  <button class="send" id="cpy" onclick="copyMsg()"
+   aria-label="ကူးယူ · copy the message">⧉</button>
+ </div>
+ <div class="bar" id="bar"><span class="hint">စရိုက်ပါ — try: nay kaung la</span></div>
 </div>
 </div>
 <script>
@@ -355,14 +383,19 @@ function drawMsg(){
     r.textContent=words.map(w=>w.rom||w.my).join(" ");
     m.appendChild(r);
   }
+  m.scrollTop=m.scrollHeight;                    // newest word stays in view
+  const empty=!words.length;
+  $("msgwrap").classList.toggle("has",!empty);   // reveal undo / clear
+  $("cpy").disabled=empty;
 }
 function undo(){if(words.length){M.undos++;words.pop();prev=null;drawMsg();render();drawStats()}}
 function clearAll(){words=[];prev=null;drawMsg();render()}
 function copyMsg(){
   const t=words.map(w=>w.my).join(words.some(w=>w.raw)?" ":"");
+  if(!t)return;
   navigator.clipboard.writeText(t).then(()=>{
-    $("cpy").textContent="✓ ကူးပြီး · copied";
-    setTimeout(()=>$("cpy").textContent="⧉ ကူးယူ · copy",1200);
+    const b=$("cpy");b.textContent="✓";
+    setTimeout(()=>{b.textContent="⧉"},1200);
   });
 }
 $("inp").addEventListener("input",render);
@@ -409,8 +442,9 @@ $("donate").addEventListener("change",()=>{
   sync();
 })();
 /* Action buttons must not steal focus from the input on desktop either. */
-document.querySelectorAll(".row button").forEach(b=>
+document.querySelectorAll(".composerow button,.msgacts button").forEach(b=>
   b.addEventListener("pointerdown",e=>{if(e.pointerType==="mouse")e.preventDefault()}));
+drawMsg();
 render();
 </script></body></html>'''
 open("try-burmese.html","w").write(html.replace("__DATA__", data))
