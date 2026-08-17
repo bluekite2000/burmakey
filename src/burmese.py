@@ -1,9 +1,9 @@
 """
-Burmese draft-4 study, replicating the Lao methodology with BETTER data:
+Burmese romanized-input study on real corpus data:
 - myG2P v2 (24,802 words with tone-marked romanization)  [CC BY-NC-SA 4.0]
 - myPOS v3 (43,196 real segmented sentences)              [CC BY-NC-SA 4.0]
 
-Design lesson from Lao applied directly: skip inventing an orthography.
+Core design choice: skip inventing an orthography.
 Input = toneless "Burglish" (what people already type), output = Burmese
 script (unambiguous by construction), engine disambiguates.
 """

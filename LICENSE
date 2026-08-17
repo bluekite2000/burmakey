@@ -21,9 +21,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ---
-Data notes: word lists and dictionaries are loaded at runtime from the
-`laonlp` package (Apache-2.0, © Wannaphong Phatthiyaphaibun), including the
-Google language-resources Lao spellcheck list (Apache-2.0). The bundled UDHR
-Lao text is a UN document, freely reproducible. News headlines in
-src/corpus/headlines_lo.txt are titles collected from RFA Lao and VOA Lao,
-included as factual data for frequency statistics with attribution.
+Data notes: the MIT license above covers the code and documents in this repo.
+The Burmese lexicon, romanizations and frequency data are derived from myG2P
+v2 and myPOS v3 (© Ye Kyaw Thu et al.), licensed CC BY-NC-SA 4.0 —
+attribution required, noncommercial use only, derivatives under the same
+terms. Any commercial keyboard built on this work must relicense or rebuild
+those resources.

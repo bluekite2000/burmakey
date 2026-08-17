@@ -1,7 +1,7 @@
 """Simulated CHAT-register Burmese corpus (myPOS is news register).
-Same method as the Lao study: messages assembled from high-frequency
-conversational vocabulary; word order approximate, which understates
-bigram gains. Tests the register the keyboard actually targets."""
+Messages are assembled from high-frequency conversational vocabulary;
+word order is approximate, which understates bigram gains. Tests the
+register the keyboard actually targets."""
 import pickle, random, collections, statistics
 D = pickle.load(open("mm_data.pkl","rb"))
 LEX, FREQ, TRAIN = D["LEX"], D["FREQ"], D["TRAIN"]

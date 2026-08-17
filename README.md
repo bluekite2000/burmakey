@@ -1,140 +1,125 @@
-# Aksoon Laatin — a Latin orthography and smart keyboard design for Lao
+# BurmaKey — type Burglish, get Burmese script
 
-**Status: designed and validated in simulation. Never reviewed by a native Lao
-speaker. That review is the project's single missing ingredient — if you read
-Lao, start with [docs/summary-for-lao-readers.md](docs/summary-for-lao-readers.md).**
+**Status: designed and validated in simulation on real corpus data. No user
+trials, no native-speaker review. That review is the project's single missing
+ingredient.**
 
-Millions of Lao people type "karaoke Lao" — Lao in improvised English letters
-(*sabaidee*, *khob jai*) with no tones and no vowel length. It works, but in a
-simulated 40-message chat, **88% of words sent were spelled identically to at
-least one other Lao word** (`khaw` = rice / news / knee / white / …).
+Young Myanmar people type "Burglish" — Burmese in improvised English letters,
+with no tones and no vowel length. It works, but measured over 19,898 real
+held-out corpus tokens, **67.7% of words sent were spelled identically to at
+least one other Burmese word** (`taja` = 7 words, `akyi` = 7, `acha` = 6…).
+The reader guesses; usually right, sometimes wrong.
 
-This repo contains, in the order they were built:
-
-0. **A white paper** consolidating the design and every experiment
-   ([docs/whitepaper.md](docs/whitepaper.md)) — start here for the full story
-1. **A standardization proposal** for Latin-script Lao ("Aksoon Laatin") —
-   ASCII-only, tones written as final letters in the style of Hmong RPA
-   ([docs/proposal.md](docs/proposal.md))
-2. **A machine verifier** that enumerates all 22,704 legal Lao syllables and
-   proves the spelling collision-free — and which found two real bugs in the
-   hand-made design (`src/verify.py`)
-3. **Three redesigns driven by simulation**, ending somewhere unexpected
-4. **The punchline: the spelling doesn't matter as much as the engine.** The
-   winning design ("draft 4") lets users type the karaoke Lao they already
-   know, while a learning predictor picks the intended word and emits real
-   Lao script — the pinyin architecture, applied to Lao
+The fix is not a better spelling. It is the pinyin contract: let people type
+the Burglish they already know, and let a learning predictor pick the intended
+word and emit real Burmese script. Because the output is always canonical
+Unicode by construction, the same design also sidesteps the decade-long
+Zawgyi/Unicode split.
 
 ## Key results (all simulated — see caveats)
 
-| Keyboard | Typing effort | Reader receives |
+| System | Typing effort | Reader receives |
 |---|---|---|
-| karaoke Lao, typed out (today) | ~4.7 taps/word | 88% of words ambiguous |
-| draft 3 spelling, typed directly | ~4.0 taps/word | unambiguous |
-| **draft 4: karaoke in → Lao script out** | **~2.5–3.1 taps/word** | **real Lao script** |
+| Burmese script, key-per-character (today's keyboards) | 5.18 taps/word | unambiguous |
+| Burglish typed out (today's chat) | 4.90 taps/word | 67.7% of words ambiguous |
+| **BurmaKey: Burglish in → Burmese script out** | **2.58 taps/word** | **clean Unicode, unambiguous** |
 
-- Draft 4 needed **34–42% fewer taps than today's typing** across a natural
-  dialogue and a 3,300-word, 25-topic stress test, while eliminating the
-  ambiguity problem entirely.
-- It has a hard floor: an unrecognized word (name, slang) is sent as typed —
-  it can never be worse than the status quo.
-- Corpus experiment: pretraining the engine on the only obtainable real Lao
-  corpus (UDHR + news headlines) made performance *worse* — register
-  mismatch. The right training data (chat) exists only on users' phones, so
-  the on-device-learning design is not a stopgap; it is the correct
-  architecture.
-- Token-frequency measurement over real running Lao confirmed the proposal's
-  most contested choice: the high tone (29.9% of syllables) is the right one
-  to leave unwritten.
+- **−50.2% taps vs script typing, −47.4% vs Burglish chat**, while eliminating
+  the ambiguity problem entirely.
+- Hard floor: an unrecognized word (name, slang) is sent exactly as typed — it
+  can never be worse than the status quo.
+- Head-to-head against Bagan (10M+ downloads, market leader): against Bagan as
+  it actually behaves, taps are roughly halved (−52% chat, −50% essay). Against
+  a hypothetical Bagan carrying this exact engine over script keys, it is a
+  statistical tie — **the engine, not the Latin input code, is the measured
+  advantage.**
+- Corpus pretraining helps here (+0.10 taps saved, zero-key 14.7→17.9%)
+  because train and test share register. Pretraining on a *mismatched* register
+  hurts instead, so the corpus has to match the target register.
+- Shortlist of 5 candidates beats 3 (2.58 vs 2.84 taps/word).
+- Only 1.2% of in-lexicon tokens had to be typed out in full.
 
-## Try the keyboard (for Lao speakers)
+Full method, numbers and caveats: [docs/burmese-study.md](docs/burmese-study.md).
 
-`web/index.html` is a working, mobile-first version of the draft-4 keyboard:
-type karaoke Lao in the box, tap the Lao word you meant, copy real Lao script.
-The full 20k-word lexicon and the learning engine run entirely in the browser.
+## Try the keyboard
+
+`web-my/index.html` is a working, mobile-first browser keyboard: type Burglish
+in the box, tap the Burmese word you meant, copy real Unicode. The full
+16,192-word lexicon and the learning engine run entirely in the browser, plus a
+Burglish-variant normalizer (nay→nei, kaung→kaun, pyaw→pjo, ph→hp, ny→nj…).
+
+`index.html` is the landing page; `demos/burmese-race.html` is an animated
+side-by-side replay of a script keyboard and this one typing the same messages,
+key by key.
 
 **Hosting (Netlify, recommended):** drag this folder onto app.netlify.com/drop
-(or connect the repo) — `index.html` is the landing page, keyboards at
-`/web-my/` (Burmese) and `/web/` (Lao). Analytics work out of the box: both
-pages ship with `ANALYTICS.endpoint = "netlify"`, so sessions and feedback
-land in your Netlify dashboard under Site → Forms ("analytics" form) with no
-external service. Free tier: 100 submissions/month — fine for a pilot; swap
-in a Formspree URL or raise the plan if testers exceed it. GitHub Pages also
-works but needs a Formspree endpoint since it has no form handling.
+(or connect the repo) — `index.html` is the landing page, the keyboard is at
+`/web-my/`. Analytics work out of the box: the page ships with
+`ANALYTICS.endpoint = "netlify"`, so sessions and feedback land in your Netlify
+dashboard under Site → Forms ("analytics" form) with no external service. Free
+tier: 100 submissions/month — fine for a pilot; swap in a Formspree URL or
+raise the plan if testers exceed it. GitHub Pages also works but needs a
+Formspree endpoint since it has no form handling.
 
 **Analytics — three levels:** (1) session totals (taps/word, hit rates) and
 (2) per-word content-free events (keys pressed, candidate position, timing)
 are sent automatically once an endpoint is set — never message text. (3) The
 actual typed words are shared only via an explicit opt-in "donate my typing"
 toggle, off by default, with a live preview of exactly what would be sent —
-this consented stream is the only ethical route to the chat-register corpus
-the white paper (§7) shows is otherwise unobtainable. Unknown words likewise
-require their own consent box. To receive data
-automatically, create a free form endpoint (e.g. Formspree) and paste its URL
-into the `ANALYTICS.endpoint` constant at the top of the page's script;
-without an endpoint, the "send feedback" button falls back to a pre-filled
-email. Update `ANALYTICS.mailto` and the GitHub link (marked CHANGEME) before
+this consented stream is the only ethical route to a chat-register corpus,
+which is otherwise unobtainable. Unknown words likewise require their own
+consent box. Without an endpoint, the "send feedback" button falls back to a
+pre-filled email. Update `ANALYTICS.mailto` and the GitHub link before
 publishing.
-
-## Try the demos (no install needed — open in a browser)
-
-- `demos/aksoon-demo.html` — interactive keyboard simulator with a real
-  19k-word lexicon; toggle between karaoke Lao and the tone-marked spelling
-- `demos/typing-race.html` — animated side-by-side replay of both keyboards
-  typing the same 40-message conversation, key by key
-- `demos/convo.html` — that conversation annotated word by word, with every
-  ambiguous spelling highlighted
 
 ## Reproduce the pipeline
 
 ```bash
-pip install laonlp datasets --break-system-packages
+git clone https://github.com/ye-kyaw-thu/myG2P /tmp/myg2p
+git clone https://github.com/ye-kyaw-thu/myPOS /tmp/mypos
 cd src
-python3 verify.py       # enumerate syllables, prove collision-freedom
-python3 tones.py        # tone frequency over the 21k-word list
-python3 lao2al.py       # build the draft-1 lexicon (writes lexicon.json)
-python3 phonemize.py    # phoneme-level lexicon (writes phonlex.json)
-python3 optimise.py     # draft 2: search 144 spellings for speed+accuracy
-python3 optimise3.py    # draft 3: add familiarity as a third objective
-python3 convo.py        # simulate a 40-message dialogue on both keyboards
-python3 draft4b.py      # draft 4: karaoke input, learning engine, clear output
-python3 sim_long.py     # 3,300-word 25-topic stress test  (few minutes)
-python3 tune.py         # shortlist-size and weight tuning
-python3 ingest.py       # corpus ingestion + the failed-pretraining result
+python3 burmese.py        # iteration 1: dictionary-only romanizer (biased, kept for the record)
+python3 burmese2.py       # iteration 2: syllable romanizer, 87.3% coverage, headline numbers
+python3 mm_chat.py        # chat-register simulation (needs mm_data.pkl, see below)
+python3 build_web_my.py   # regenerate the web keyboard (needs weblex_my.txt, see below)
 ```
 
-Scripts are session artifacts, not a library: they read and write JSON in
-their own directory, print their findings to stdout, and several run work at
-import time. Read them top to bottom; each file's docstring says what
-question it answers.
+Only the standard library is needed. Note that `mm_chat.py` and
+`build_web_my.py` read two intermediate artifacts — `mm_data.pkl` and
+`weblex_my.txt` — that are not committed and are not produced by any script in
+this repo; they were built ad hoc in the original session. Regenerating them
+from `burmese2.py`'s lexicon and frequency tables is outstanding work.
+
+Scripts are session artifacts, not a library: they read and write JSON in their
+own directory, print their findings to stdout, and run work at import time.
+Read them top to bottom; each file's docstring says what question it answers.
 
 ## What's known to be unresolved
 
-- Every number here is simulation. No human has typed on this keyboard.
-- The design targets Vientiane Lao; other dialects have different tone
-  systems, and the native script's tone-class indirection (which travels
-  across dialects) is genuinely lost in any Latin tone spelling.
-- The frequency model mixes a stopword list, a POS-tagger vocabulary, and a
-  Zipf assumption; a real chat corpus would replace it (and only exists on
-  Lao phones).
-- The suggestion-bar attention cost (picking candidate #2/#3 on ~54% of
-  words) is priced crudely.
-- Five specific questions for Lao readers are listed at the end of
-  [docs/summary-for-lao-readers.md](docs/summary-for-lao-readers.md).
+- Every number here is simulation with a perfect typist — no typos, instant
+  candidate recognition. No human has typed on this keyboard.
+- The suggestion-bar attention cost (picking a candidate on ~69% of words) is a
+  real cost that taps do not price.
+- 12.7% of corpus tokens fall outside the romanizable lexicon and were skipped
+  in scoring; the raw-fallback guarantee covers them in a real product.
+- Burglish spelling in the wild varies more than tone-stripped MLC
+  romanization. The variant normalizer in the web keyboard was derived from
+  spelling logic, not from Burmese users, and needs native tuning.
+- myPOS is news/general register, not chat. The chat simulation
+  (`src/mm_chat.py`) brackets it but assembles messages with approximate word
+  order.
+- The Burmese UI text in `index.html` and `web-my/index.html` has not been
+  reviewed by a native speaker.
 
 ## Acknowledgements
 
-- **Wannaphong Phatthiyaphaibun** — the [laonlp](https://github.com/wannaphong/laonlp)
-  toolkit (Apache-2.0) provides the tokenizers and every word list used here.
-  This project is downstream of that work in almost every file.
-- Google's [language-resources](https://github.com/google/language-resources)
-  Lao spellcheck list (Apache-2.0) — the lexicon base.
-- Tone rules follow r12a's [Lao orthography notes](https://r12a.github.io/scripts/laoo/lo).
-- The design conversation that produced this repo began with a question about
-  the history of quốc ngữ, and ended by rediscovering why pinyin won: humans
-  should type what they know; machines should write what they mean.
+- **Ye Kyaw Thu et al.** — [myG2P](https://github.com/ye-kyaw-thu/myG2P) v2
+  (24,802 tone-marked romanizations) and
+  [myPOS](https://github.com/ye-kyaw-thu/myPOS) v3 (41,738 segmented
+  sentences), both CC BY-NC-SA 4.0. The lexicon, the romanizer and every
+  frequency number in this repo are downstream of that work.
 
 ## License
 
-MIT for the code and documents in this repo. Runtime data comes from
-Apache-2.0 sources credited above; see LICENSE for data notes.
+MIT for the code and documents in this repo. Runtime data is CC BY-NC-SA 4.0
+(noncommercial) — see LICENSE for data notes.

@@ -1,9 +1,6 @@
 # regenerable artifacts (run the pipeline in src/)
-lexicon.json
-phonlex.json
-demo_lex.json
-events.json
-convo.json
-topics.json
-pretrained.json
+burmese_results.json
+try-burmese.html
+mm_data.pkl
+weblex_my.txt
 __pycache__/

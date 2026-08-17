@@ -1,4 +1,4 @@
-# Burmese replication study — draft-4 architecture on Myanmar data
+# Burmese study — romanized input with a learning ranker on Myanmar data
 
 **Status: simulation on real corpus data. No user trials. No native review.**
 **Data: myG2P v2 and myPOS v3 (Ye Kyaw Thu et al., CC BY-NC-SA 4.0 — noncommercial;
@@ -16,12 +16,12 @@ emits canonical Unicode by construction — it fixes typing and encoding at once
 Bagan, Frozen, TTKeyboard (1M+ downloads, 4.4★) and Gboard Myanmar all type
 the script character-by-character on shifted layouts; none offers phonemic
 romanized input with prediction. Burglish.app offers transliteration without
-a learning engine. The gap is identical to Lao's: transliteration exists,
-the pinyin contract does not.
+a learning engine. That is the gap: transliteration exists, the pinyin
+contract — type what you know, receive what you meant — does not.
 
 ## Method
 
-Better data than the Lao study: myG2P provides 24,802 words with tone-marked
+myG2P provides 24,802 words with tone-marked
 romanizations; mining its syllable alignments yields a 2,348-entry
 syllable→roman map plus a rule syllable-breaker (89.4% exact-match vs myG2P's
 own splits), which romanizes 16,192 corpus words — **87.3% token coverage** of
@@ -30,8 +30,9 @@ were discarded as biased). myPOS supplies 41,738 real segmented sentences:
 39,738 train (frequencies, bigram prior), 2,000 held-out test (19,898 scored
 tokens). Input code = toneless Burglish (tone marks stripped from MLC-style
 romanization); output = Burmese script, unambiguous by construction; engine =
-the Lao draft-4 ranker unchanged (freq + 10·recency + 100·bigram, beam 50,
-5-candidate bar).
+a learning ranker over lexicon candidates (freq + 10·recency + 100·bigram,
+beam 50, 5-candidate bar), language-independent by design — only the lexicon
+and the romanizer are Burmese-specific.
 
 ## Results (19,898 real test tokens)
 
@@ -39,21 +40,21 @@ the Lao draft-4 ranker unchanged (freq + 10·recency + 100·bigram, beam 50,
 |---|---|---|
 | Burmese script, key-per-character (today's keyboards) | 5.18 | 0% |
 | Burglish typed out (today's chat) | 4.90 | **67.7%** |
-| draft-4 engine, cold start | 2.68 | 0% |
-| **draft-4 engine, corpus-pretrained** | **2.58** | **0%** |
+| ranker engine, cold start | 2.68 | 0% |
+| **ranker engine, corpus-pretrained** | **2.58** | **0%** |
 
 - **−50.2% taps vs script typing; −47.4% vs Burglish chat — while eliminating
-  ambiguity entirely.** Larger gains than Lao (−34…−42%), because Burmese
-  words are longer (more syllables), giving prediction more to save.
-- **Toneless Burglish is even sicker than karaoke Lao**: 67.7% of running
-  words ambiguous (`taja` = 7 words, `akyi` = 7, `acha` = 6…), yet it is
-  *still* marginally faster to type than the script (4.90 vs 5.18) — which is
-  exactly why people use it. The engine beats both at once.
+  ambiguity entirely.** Burmese words are long (several syllables), which is
+  what gives prediction so much to save.
+- **Toneless Burglish is badly ambiguous**: 67.7% of running words collide
+  (`taja` = 7 words, `akyi` = 7, `acha` = 6…), yet it is *still* marginally
+  faster to type than the script (4.90 vs 5.18) — which is exactly why people
+  use it. The engine beats both at once.
 - **Corpus pretraining HELPED here (+0.10 taps saved, zero-key 14.7→17.9%)**,
-  unlike Lao where it hurt — because train and test share register. This
-  completes the Lao finding: pretraining is not bad per se; *mismatched*
-  pretraining is. With a matched corpus, ship the prior.
-- Shortlist 5 beats 3 (2.58 vs 2.84), replicating the Lao tuning result.
+  because train and test share register. Pretraining is not good or bad per
+  se; *mismatched* register is what hurts. With a matched corpus, ship the
+  prior.
+- Shortlist 5 beats 3 (2.58 vs 2.84).
 - Only 1.2% of in-lexicon tokens required typing in full.
 
 ## Caveats
@@ -64,18 +65,18 @@ baseline (one key per codepoint) is a fair approximation of layout keyboards
 but ignores their shift-layer costs (which would worsen the baseline, not the
 engine). 12.7% of tokens fall outside the romanizable lexicon and were skipped
 (the raw-fallback guarantee covers them in a real product). Burglish spelling
-in the wild varies more than tone-stripped MLC; a variant-normalization layer
-(as built for Lao) is needed before user trials. myPOS is news/general
-register, not chat — closer than Lao's UDHR, still not ideal.
+in the wild varies more than tone-stripped MLC, so a variant-normalization
+layer is needed before user trials. myPOS is news/general register, not chat
+— the register the keyboard actually targets is bracketed in §"Chat-register
+simulation" below, not measured directly.
 
 ## Conclusion
 
-The draft-4 architecture transfers to Burmese with **larger** measured gains
-than the original Lao study, on **better** evidence (real held-out sentences
-rather than constructed dialogue). The engine needed zero design changes —
-only the lexicon and romanizer are language-specific, together ~100 lines
-mined from existing CC-licensed resources. Scripts: `src/burmese.py`,
-`src/burmese2.py`; results: `src/burmese2_results.json`.
+The architecture holds up on Burmese, on strong evidence: real held-out
+sentences rather than constructed dialogue. Only the lexicon and the romanizer
+are language-specific, together ~100 lines mined from existing CC-licensed
+resources; the ranker itself carries no Burmese knowledge. Scripts:
+`src/burmese.py`, `src/burmese2.py`; results: `src/burmese2_results.json`.
 
 ## Head-to-head vs Bagan (10M+ downloads, market leader)
 
@@ -90,14 +91,14 @@ is only ~3% — script entry is not as layer-punished as assumed.
 |---|---|---|
 | Bagan as actually used (weak prediction) | 5.24 | 5.41 |
 | Bagan + ideal engine (does not exist) | 2.42 | 2.58 |
-| Draft 4 (Burglish in, script out) | 2.45 | 2.67 |
+| BurmaKey (Burglish in, script out) | 2.45 | 2.67 |
 
-**Findings.** (1) Against Bagan as it exists, draft 4 halves the taps
+**Findings.** (1) Against Bagan as it exists, BurmaKey halves the taps
 (−52% chat, −50% essay; ~29 → ~61 wpm at 2.5 taps/s). (2) Against a
 hypothetical Bagan carrying our exact engine over script keys, it is a
 statistical tie — script characters are more informative per tap, offsetting
 the 26-key simplicity. **The engine, not the Latin input code, is the entire
-measured advantage.** (3) Draft 4's remaining edge over the hypothetical is
+measured advantage.** (3) BurmaKey's remaining edge over the hypothetical is
 qualitative: no script-layout skill needed (the Burglish generation already
 has Latin muscle memory), larger key targets (typo rates unmodelled but
 favour 26 keys), and free English↔Burmese code-switching without keyboard
@@ -112,14 +113,14 @@ codes are skins.
 myPOS is news register; a simulated chat stream (600 messages, 3,308 words
 assembled from the conversational high-frequency vocabulary, word order
 approximate) checks the register the keyboard targets: Burglish ambiguity
-57%, script typing 5.81 taps/word, Burglish 5.47, **draft-4 engine 3.30
+57%, script typing 5.81 taps/word, Burglish 5.47, **the ranker engine 3.30
 (−43% / −40%)** — gains hold outside the news register. Zero-key prediction
 collapses (0.9%) in scrambled word order, confirming it derives from real
 syntax; real chat sits between this floor and the +18% measured on real
 sentences.
 
 `web-my/index.html` is the Burmese try-it keyboard: full 16,192-word lexicon,
-identical engine and three-level analytics as the Lao page, plus a
+the same engine and three-level analytics as the study above, plus a
 Burglish-variant normalizer (nay→nei, kaung→kaun, pyaw→pjo, ph→hp, ny→nj…)
 that needs native tuning — variant rules were derived from spelling logic,
 not from Burmese users. Output is always canonical Unicode; on-device

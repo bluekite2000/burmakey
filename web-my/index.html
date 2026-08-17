@@ -102,7 +102,7 @@ analytics is configured), we receive <i>numbers only</i> — taps per word, how
 often the first suggestion was right — never the words themselves. Two
 exceptions, both off by default and only if you tick them: unknown words, and
 donated typing, shown to you first.<br><br>
-<a href="https://github.com/CHANGEME/aksoon-laatin">open source, white paper &amp; study</a> ·
+<a href="https://github.com/bluekite2000/burmakey">open source &amp; study</a> ·
 lexicon from <a href="https://github.com/ye-kyaw-thu/myG2P">myG2P</a> and
 <a href="https://github.com/ye-kyaw-thu/myPOS">myPOS</a> (Ye Kyaw Thu et al.,
 CC BY-NC-SA 4.0 — this tool is free and noncommercial)
@@ -16454,7 +16454,7 @@ function commit(i,raw,pos,zeroKey){
   if(i!==null){
     if(pos===0)M.top1++;else M.barPick++;
     if(nrm)M.normed++;
-    words.push({lao:LO[i],rom:KK[i],raw:false});
+    words.push({my:LO[i],rom:KK[i],raw:false});
     recency.set(i,(recency.get(i)||0)+1);
     if(prev!==null){
       let bg=bigram.get(prev);
@@ -16464,24 +16464,24 @@ function commit(i,raw,pos,zeroKey){
     prev=i;
   }else{
     M.raw++;if(M.oov.length<200)M.oov.push(raw);
-    words.push({lao:raw,rom:"",raw:true});
+    words.push({my:raw,rom:"",raw:true});
     prev=null;
   }
   $("inp").value="";drawMsg();render();drawStats();$("inp").focus();
 }
 function drawMsg(){
   const m=$("msg");
-  m.textContent=words.map(w=>w.lao).join(words.some(w=>w.raw)?" ":"");
+  m.textContent=words.map(w=>w.my).join(words.some(w=>w.raw)?" ":"");
   if($("showrom").checked&&words.length){
     const r=document.createElement("span");r.className="rom";
-    r.textContent=words.map(w=>w.rom||w.lao).join(" ");
+    r.textContent=words.map(w=>w.rom||w.my).join(" ");
     m.appendChild(r);
   }
 }
 function undo(){if(words.length){M.undos++;words.pop();prev=null;drawMsg();render();drawStats()}}
 function clearAll(){words=[];prev=null;drawMsg();render()}
 function copyMsg(){
-  const t=words.map(w=>w.lao).join(words.some(w=>w.raw)?" ":"");
+  const t=words.map(w=>w.my).join(words.some(w=>w.raw)?" ":"");
   navigator.clipboard.writeText(t).then(()=>{
     $("cpy").textContent="✓ ကူးပြီး · copied";
     setTimeout(()=>$("cpy").textContent="⧉ ကူးယူ · copy",1200);
