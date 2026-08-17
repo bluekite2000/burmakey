@@ -168,6 +168,13 @@ padding:14px;margin:8px 0;font-size:13.5px;line-height:1.7;color:var(--ink)}
 padding:14px;display:flex;flex-direction:column;gap:10px}
 .exstart h2{font-size:14px;margin:0}
 .exstart p{margin:0;font-size:12.5px;color:var(--dim);line-height:1.6}
+.exerr{background:#3a1d1d;border:1px solid #7d3b3b;border-radius:10px;
+padding:10px 12px;font-size:12.5px;color:#ffc9c9;line-height:1.55}
+@keyframes exflash{0%,100%{box-shadow:0 0 0 0 rgba(255,120,120,0)}
+  50%{box-shadow:0 0 0 6px rgba(255,120,120,.5)}}
+#exok.flash{animation:exflash .6s ease-in-out 3;border-radius:4px}
+@media(prefers-reduced-motion:reduce){#exok.flash{animation:none;
+  outline:3px solid #ff8080;outline-offset:2px}}
 
 /* ---------- More pane ---------- */
 #pane-help,#pane-about{overflow-y:auto;-webkit-overflow-scrolling:touch;
@@ -192,11 +199,14 @@ color:var(--ink);font:16px inherit;padding:10px;min-height:56px;resize:vertical;
 .fb .thumbs button{font-size:19px;flex:0 0 auto;padding:9px 20px;min-width:64px}
 .fb .thumbs button.on{background:var(--acc);border-color:var(--acc)}
 .fb .pri{width:100%}
-label{font-size:12.5px;color:var(--dim);display:flex;gap:9px;align-items:flex-start;
-cursor:pointer;-webkit-user-select:none;user-select:none;line-height:1.5;
-padding:4px 0;min-height:32px}
-label input[type=checkbox]{width:20px;height:20px;flex:0 0 auto;margin:1px 0 0;
-accent-color:var(--acc)}
+/* NOT flex: any <b> or <i> inside the label would become its own flex item,
+   which broke the consent text into squeezed columns. Float the box instead
+   and let the text flow normally. */
+label{font-size:12.5px;color:var(--dim);display:block;position:relative;
+cursor:pointer;-webkit-user-select:none;user-select:none;line-height:1.55;
+padding:4px 0 4px 30px;min-height:32px}
+label input[type=checkbox]{position:absolute;left:0;top:5px;
+width:20px;height:20px;margin:0;accent-color:var(--acc)}
 .foot{color:var(--dim);font-size:12.5px;line-height:1.7;border-top:1px solid var(--ln);
 padding-top:12px}
 .foot b{color:var(--ink)}
@@ -265,6 +275,7 @@ only way we learn how <i>you</i> spell Burglish.</p>
 <label><input type="checkbox" id="exok">လေ့ကျင့်ခန်းအတွင်း ရိုက်သည်များကို မှတ်တမ်းတင်မည် ·
 record what I type <b>during the exercise only</b> — the sentences are given
 to you, and the 3 free messages are yours to choose. Nothing else is recorded.</label>
+<div class="exerr" id="exerr" role="alert" aria-live="assertive" hidden></div>
 <button class="pri" id="exgo" onclick="exStart()">စတင်မည် · start the test</button>
 </div>
 
@@ -16872,10 +16883,21 @@ function exSnap(){
 }
 function exStart(){
   if(!$("exok").checked){
-    $("exok").parentElement.style.color="#e88";
-    setTimeout(()=>{$("exok").parentElement.style.color=""},1600);
+    /* a silent gate reads as a dead button: the consent line sits above the
+       fold of the thumb, so tinting its text was invisible. Say it out loud,
+       put the box back on screen, and flash the box itself. */
+    const e=$("exerr");
+    e.hidden=false;
+    e.textContent="☝ အရင်ဆုံး အထက်ကအကွက်ကို အမှန်ခြစ်ပါ · "+
+                  "please tick the box above first — the test records what you "+
+                  "type, so we need your say-so.";
+    const box=$("exok");
+    box.parentElement.scrollIntoView({block:"center",behavior:"smooth"});
+    box.classList.add("flash");
+    setTimeout(()=>box.classList.remove("flash"),1800);
     return;
   }
+  $("exerr").hidden=true;
   ex.on=true; ex.i=0; ex.rows=[]; sent=[]; words=[]; prev=null;
   $("exbar").hidden=false;
   $("exprog").max=EX_ITEMS.length;
