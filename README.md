@@ -66,6 +66,12 @@ in the box, tap the Burmese word you meant, copy real Unicode. The full
 16,192-word lexicon and the learning engine run entirely in the browser, plus a
 Burglish-variant normalizer (nay→nei, kaung→kaun, pyaw→pjo, ph→hp, ny→nj…).
 
+It is laid out as an app, not a document: a **Type** pane where the message
+fills the screen above the input and suggestion strip, and a **More** pane
+holding the explanation, privacy notes, session stats and the feedback form.
+The shell is sized to `100dvh - keyboard` from `visualViewport`, so the
+message area absorbs the keyboard opening instead of being pushed off screen.
+
 `index.html` is the landing page; `demos/burmese-race.html` is an animated
 side-by-side replay of a script keyboard and this one typing the same messages,
 key by key.

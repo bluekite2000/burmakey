@@ -5,61 +5,79 @@ html = r'''<!DOCTYPE html><html lang="my"><head><meta charset="utf-8">
 <title>မြန်မာစာရိုက် — type Burmese with English letters</title><style>
 :root{--bg:#0f1115;--pan:#171a21;--ln:#252a34;--ink:#e6e9ef;--dim:#8b93a3;
 --acc:#6ea8fe;--good:#6fcf97;
---kb:0px;            /* height the OS keyboard covers (set by visualViewport) */
---composer-h:190px}  /* measured height of the fixed composer */
+--kb:0px}   /* height the OS keyboard covers, set from visualViewport */
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);
 font:16px/1.6 "Noto Sans Myanmar","Myanmar MN","Pyidaungsu",ui-sans-serif,system-ui,sans-serif;
-min-height:100vh;min-height:100dvh;
-overscroll-behavior-y:none;      /* no pull-to-refresh / rubber-band while typing */
-touch-action:manipulation;       /* kills the 300ms double-tap-zoom delay */
+height:100vh;height:100dvh;overflow:hidden;
+overscroll-behavior:none;touch-action:manipulation;
 -webkit-tap-highlight-color:transparent}
-.app{width:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;
-min-height:100vh;min-height:100dvh}
 
-/* ---- scrolling page content (everything except the composer) ---- */
-.content{flex:1 1 auto;display:flex;flex-direction:column;gap:12px;
-padding:16px max(14px,env(safe-area-inset-right)) 0 max(14px,env(safe-area-inset-left));
-padding-bottom:calc(var(--composer-h) + var(--kb) + 20px)}
+/* app shell: a flex column sized to whatever the keyboard leaves us */
+.app{width:100%;max-width:560px;margin:0 auto;
+height:100vh;height:100dvh;height:calc(100dvh - var(--kb));
+display:flex;flex-direction:column;
+padding-left:max(12px,env(safe-area-inset-left));
+padding-right:max(12px,env(safe-area-inset-right));
+transition:height .14s ease-out}
+@media(prefers-reduced-motion:reduce){.app{transition:none}}
 
-/* ---- composer: candidate bar + input + actions, pinned above the keyboard ---- */
-.composer{position:fixed;left:0;right:0;bottom:0;z-index:20;
-width:100%;max-width:560px;margin:0 auto;
-background:rgba(15,17,21,.94);
--webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
-border-top:1px solid var(--ln);
-padding:7px max(14px,env(safe-area-inset-right))
-calc(7px + max(6px,env(safe-area-inset-bottom))) max(14px,env(safe-area-inset-left));
-display:flex;flex-direction:column;gap:8px;
-transform:translateY(calc(-1 * var(--kb)));
-transition:transform .14s ease-out}
-@media(prefers-reduced-motion:reduce){.composer{transition:none}}
+.topbar{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:9px 2px 7px}
+h1{font-size:16.5px;margin:0;font-weight:600;flex:1 1 auto;min-width:0;
+white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tabs{display:flex;gap:3px;background:var(--pan);border:1px solid var(--ln);
+border-radius:12px;padding:3px;flex:0 0 auto}
+.tabs button{background:none;border:0;color:var(--dim);font:13px inherit;
+padding:6px 11px;border-radius:9px;min-height:38px;cursor:pointer;
+touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+-webkit-user-select:none;user-select:none;white-space:nowrap}
+.tabs button[aria-selected=true]{background:var(--acc);color:#08101c;font-weight:600}
+.tabs button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 
-h1{font-size:20px;margin:0}
-.sub{color:var(--dim);font-size:13px;margin:0}
-/* the "thread": short by default, grows to a ceiling, then scrolls, so it
-   can never push the input off the screen */
-.msgwrap{position:relative}
-.msg{background:var(--pan);border:1px solid var(--ln);border-radius:13px;
-min-height:58px;max-height:min(30vh,220px);overflow-y:auto;
-overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
-padding:11px 13px;font-size:19px;line-height:1.85;word-break:break-word;
+.pane{flex:1 1 auto;min-height:0;padding-bottom:max(8px,env(safe-area-inset-bottom))}
+/* must outrank the #id display rules below, or a hidden pane stays laid out
+   and silently swallows taps meant for the keyboard */
+[hidden]{display:none!important}
+#pane-type{display:flex;flex-direction:column;gap:9px}
+#pane-more{overflow-y:auto;-webkit-overflow-scrolling:touch;
+overscroll-behavior-y:contain;display:flex;flex-direction:column;gap:12px}
+
+/* ---- the message IS the screen ---- */
+.msgwrap{flex:1 1 auto;min-height:96px;position:relative;display:flex}
+.msg{flex:1 1 auto;min-width:0;overflow-y:auto;overscroll-behavior:contain;
+-webkit-overflow-scrolling:touch;
+background:var(--pan);border:1px solid var(--ln);border-radius:16px;
+padding:16px 15px;font-size:23px;line-height:1.95;word-break:break-word;
 -webkit-user-select:text;user-select:text}
-/* undo / clear ride on top of the message, so they cost no layout height and
-   stay out of the way until there is something to act on */
-.msgacts{position:absolute;top:7px;right:7px;display:flex;gap:6px;
+.msg:empty{display:flex;align-items:center;justify-content:center;text-align:center}
+.msg:empty::before{content:"သင့်စာသား ဒီမှာပေါ်မယ်\A your message appears here";
+white-space:pre-line;color:#464f60;font-size:15px;line-height:1.7}
+.msg .rom{display:block;font-size:12px;color:#7ea7d8;
+font-family:ui-monospace,Menlo,monospace;margin-top:8px;word-break:break-all}
+/* undo / clear ride on the message, revealed only when there is something
+   to act on, so they cost no layout height and never cover the placeholder */
+.msgacts{position:absolute;top:8px;right:8px;display:flex;gap:6px;
 opacity:0;visibility:hidden;transition:opacity .12s}
 .msgwrap.has .msgacts{opacity:1;visibility:visible}
 .msgacts .ico{flex:0 0 auto;width:44px;height:44px;min-height:44px;padding:0;
-font-size:16px;border-radius:11px;background:rgba(13,16,21,.92);
+font-size:16px;border-radius:11px;background:rgba(13,16,21,.94);
 -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-.msg .rom{display:block;font-size:11px;color:#7ea7d8;
-font-family:ui-monospace,Menlo,monospace;margin-top:6px;word-break:break-all}
-.msg:empty::before{content:"သင့်စာသား ဒီမှာပေါ်မယ် · your message appears here";
-color:#454d5c;font-size:13.5px;line-height:1.5}
 
-/* ---- candidate bar: horizontal, momentum, never leaks its scroll to the page ---- */
+/* ---- compose row + suggestion strip ---- */
+.composer{flex:0 0 auto;display:flex;flex-direction:column;gap:8px}
+.composerow{display:flex;gap:8px;align-items:center}
+.composerow input{flex:1 1 auto;min-width:0}
+input[type=text]{width:100%;background:var(--pan);border:1px solid var(--acc);
+border-radius:13px;color:var(--acc);font:18px ui-monospace,Menlo,monospace;
+padding:14px;min-height:54px;outline:none;-webkit-appearance:none;appearance:none}
+input::placeholder{color:#3d4757;font-family:inherit}
+.send{flex:0 0 54px;width:54px;height:54px;min-height:54px;padding:0;
+border-radius:50%;font-size:21px;background:var(--acc);color:#08101c;
+border-color:var(--acc);font-weight:600;display:flex;
+align-items:center;justify-content:center}
+.send:active{background:#4b8ae0;border-color:#4b8ae0}
+
 .bar{display:flex;gap:7px;align-items:stretch;min-height:62px;padding:1px 0 0;
 overflow-x:auto;overflow-y:hidden;
 overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
@@ -67,7 +85,7 @@ scroll-snap-type:x proximity;scrollbar-width:none}
 .bar::-webkit-scrollbar{display:none}
 .cd{flex:0 0 auto;background:var(--pan);border:1px solid var(--ln);
 border-radius:12px;padding:6px 14px;text-align:center;cursor:pointer;
-min-height:56px;min-width:62px;             /* comfortable thumb target */
+min-height:56px;min-width:62px;
 display:flex;flex-direction:column;align-items:center;justify-content:center;
 scroll-snap-align:start;touch-action:manipulation;
 -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
@@ -84,26 +102,17 @@ font-family:ui-monospace,Menlo,monospace}
 .cd.raw .lo{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--dim)}
 .hint{color:#454d5c;font-size:13px;align-self:center;padding-left:4px}
 
-input[type=text]{width:100%;background:var(--pan);border:1px solid var(--acc);
-border-radius:12px;color:var(--acc);font:18px ui-monospace,Menlo,monospace;
-padding:14px;min-height:54px;outline:none;-webkit-appearance:none;appearance:none}
-input::placeholder{color:#3d4757;font-family:inherit}
-/* one compose row: input + the round primary, WhatsApp-style */
-.composerow{display:flex;gap:8px;align-items:center}
-.composerow input{flex:1 1 auto;min-width:0}
-.send{flex:0 0 54px;width:54px;height:54px;min-height:54px;padding:0;
-border-radius:50%;font-size:21px;background:var(--acc);color:#08101c;
-border-color:var(--acc);font-weight:600;display:flex;
-align-items:center;justify-content:center}
-button{flex:1;background:var(--pan);border:1px solid var(--ln);color:var(--ink);
+button{background:var(--pan);border:1px solid var(--ln);color:var(--ink);
 border-radius:11px;padding:10px 8px;font-size:14px;cursor:pointer;font-family:inherit;
 min-height:44px;line-height:1.25;touch-action:manipulation;
 -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 button:active{background:var(--ln)}
-.send:active{background:#4b8ae0;border-color:#4b8ae0}
-button[disabled]{opacity:.35;pointer-events:none}
 button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button[disabled]{opacity:.35;pointer-events:none}
 button.pri{background:var(--acc);color:#08101c;border-color:var(--acc);font-weight:600}
+
+/* ---- More pane ---- */
+.sub{color:var(--dim);font-size:13.5px;margin:0}
 .stats{font-size:11.5px;color:var(--dim);font-family:ui-monospace,Menlo,monospace}
 .fb{background:var(--pan);border:1px solid var(--ln);border-radius:14px;
 padding:13px 14px;display:flex;flex-direction:column;gap:9px}
@@ -111,16 +120,17 @@ padding:13px 14px;display:flex;flex-direction:column;gap:9px}
 .fb textarea{background:#12151b;border:1px solid var(--ln);border-radius:9px;
 color:var(--ink);font:16px inherit;padding:10px;min-height:56px;resize:vertical;
 -webkit-appearance:none;appearance:none}
-.fb .thumbs{display:flex;gap:8px;flex-wrap:wrap}
+.fb .thumbs{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .fb .thumbs button{font-size:19px;flex:0 0 auto;padding:9px 20px;min-width:64px}
 .fb .thumbs button.on{background:var(--acc);border-color:var(--acc)}
+.fb .pri{width:100%}
 label{font-size:12.5px;color:var(--dim);display:flex;gap:9px;align-items:flex-start;
 cursor:pointer;-webkit-user-select:none;user-select:none;line-height:1.5;
 padding:4px 0;min-height:32px}
 label input[type=checkbox]{width:20px;height:20px;flex:0 0 auto;margin:1px 0 0;
 accent-color:var(--acc)}
 .foot{color:var(--dim);font-size:12.5px;line-height:1.7;border-top:1px solid var(--ln);
-padding-top:12px;padding-bottom:6px}
+padding-top:12px;padding-bottom:8px}
 .foot b{color:var(--ink)}
 a{color:var(--acc)}
 </style></head><body>
@@ -128,9 +138,40 @@ a{color:var(--acc)}
   <input name="site"><input name="event"><textarea name="comment"></textarea>
   <textarea name="payload"></textarea><input name="bot-field">
 </form><div class="app">
-<div class="content" id="content">
-<h1>မြန်မာစာရိုက် <span style="color:var(--dim);font-weight:400;font-size:14px">
-type Burmese with English letters</span></h1>
+
+<div class="topbar">
+ <h1>မြန်မာစာရိုက်</h1>
+ <div class="tabs" role="tablist" aria-label="ရိုက်ရန် သို့ အချက်အလက် · type or info">
+  <button role="tab" id="tab-type" aria-selected="true" aria-controls="pane-type"
+   aria-label="ရိုက်ရန် · Type" onclick="showTab('type')">ရိုက်ရန်</button>
+  <button role="tab" id="tab-more" aria-selected="false" aria-controls="pane-more"
+   aria-label="အချက်အလက် · More" onclick="showTab('more')">အချက်အလက်</button>
+ </div>
+</div>
+
+<section class="pane" id="pane-type" role="tabpanel" aria-labelledby="tab-type">
+ <div class="msgwrap" id="msgwrap">
+  <div class="msg" id="msg"></div>
+  <div class="msgacts">
+   <button class="ico" id="undobtn" onclick="undo()"
+    aria-label="ပြန်ဖျက် · undo last word" title="ပြန်ဖျက် · undo">↩</button>
+   <button class="ico" id="clrbtn" onclick="clearAll()"
+    aria-label="ရှင်း · clear the whole message" title="ရှင်း · clear">✕</button>
+  </div>
+ </div>
+ <div class="composer">
+  <div class="composerow">
+   <input type="text" id="inp" autocomplete="off" autocorrect="off"
+    autocapitalize="none" spellcheck="false" inputmode="text" enterkeyhint="next"
+    placeholder="ဒီမှာရိုက်ပါ · type here (a-z)">
+   <button class="send" id="cpy" onclick="copyMsg()"
+    aria-label="ကူးယူ · copy the message">⧉</button>
+  </div>
+  <div class="bar" id="bar"><span class="hint">စရိုက်ပါ — try: nay kaung la</span></div>
+ </div>
+</section>
+
+<section class="pane" id="pane-more" role="tabpanel" aria-labelledby="tab-more" hidden>
 <p class="sub">Burglish ရိုက်နေကျအတိုင်း ရိုက်ပါ — အသံထွက်အတိုင်း — မှန်တဲ့စာလုံးကို နှိပ်ပါ
 · type Burglish the way it sounds, tap the right word, get real Burmese</p>
 
@@ -142,7 +183,7 @@ type Burmese with English letters</span></h1>
 <div class="thumbs">
  <button id="up" onclick="thumb(1)">👍</button>
  <button id="dn" onclick="thumb(-1)">👎</button>
- <span class="hint" style="align-self:center">အဆင်ပြေလား · does it work for you?</span>
+ <span class="hint">အဆင်ပြေလား · does it work for you?</span>
 </div>
 <textarea id="cmt" placeholder="ဘယ်စာလုံးတွေ မှားလဲ · which words were wrong? tell us anything (optional)"></textarea>
 <label><input type="checkbox" id="oovok">also share words the keyboard did NOT know
@@ -171,26 +212,8 @@ lexicon from <a href="https://github.com/ye-kyaw-thu/myG2P">myG2P</a> and
 <a href="https://github.com/ye-kyaw-thu/myPOS">myPOS</a> (Ye Kyaw Thu et al.,
 CC BY-NC-SA 4.0 — this tool is free and noncommercial)
 </div>
-</div>
-<div class="composer" id="composer">
- <div class="msgwrap" id="msgwrap">
-  <div class="msg" id="msg"></div>
-  <div class="msgacts">
-   <button class="ico" id="undobtn" onclick="undo()"
-    aria-label="ပြန်ဖျက် · undo last word" title="ပြန်ဖျက် · undo">↩</button>
-   <button class="ico" id="clrbtn" onclick="clearAll()"
-    aria-label="ရှင်း · clear the whole message" title="ရှင်း · clear">✕</button>
-  </div>
- </div>
- <div class="composerow">
-  <input type="text" id="inp" autocomplete="off" autocorrect="off"
-   autocapitalize="none" spellcheck="false" inputmode="text" enterkeyhint="next"
-   placeholder="ဒီမှာရိုက်ပါ · type here (a-z)">
-  <button class="send" id="cpy" onclick="copyMsg()"
-   aria-label="ကူးယူ · copy the message">⧉</button>
- </div>
- <div class="bar" id="bar"><span class="hint">စရိုက်ပါ — try: nay kaung la</span></div>
-</div>
+</section>
+
 </div>
 <script>
 /* ============ ANALYTICS CONFIG — set ONE and redeploy ============ */
@@ -420,26 +443,33 @@ $("donate").addEventListener("change",()=>{
       (M.donated.length>40?" …":"");
   }else{p.style.display="none"}
 });
-/* ---- mobile: keep the composer sitting on top of the OS keyboard ----
-   iOS Safari does not shrink the layout viewport when the keyboard opens, so a
-   bottom-fixed bar would hide behind it. visualViewport gives the covered
-   height; Android (interactive-widget=resizes-content) reports ~0 because the
-   layout viewport already shrank, so the same formula works on both. */
+/* ---- tabs ---- */
+function showTab(which){
+  ["type","more"].forEach(t=>{
+    document.getElementById("pane-"+t).hidden = (t!==which);
+    document.getElementById("tab-"+t).setAttribute("aria-selected",t===which);
+  });
+  if(which==="type")$("inp").focus({preventScroll:true});
+}
+/* ---- keep the app sized to what the OS keyboard leaves us ----
+   iOS Safari does not shrink the layout viewport when the keyboard opens, so
+   without this the bottom of the app hides behind it. visualViewport reports
+   the covered height; on Android (interactive-widget=resizes-content) the
+   layout viewport already shrank and this reads ~0, so one formula covers
+   both. The app is a flex column of that height, so the message area — not
+   the composer — absorbs the change. */
 (function(){
-  const comp=document.getElementById("composer"),root=document.documentElement;
-  const vv=window.visualViewport;
-  function measure(){root.style.setProperty("--composer-h",comp.offsetHeight+"px")}
+  const root=document.documentElement,vv=window.visualViewport;
   function keyboard(){
     if(!vv)return;
     const covered=Math.max(0,window.innerHeight-(vv.height+vv.offsetTop));
     root.style.setProperty("--kb",covered+"px");
   }
-  function sync(){measure();keyboard()}
-  if(vv){vv.addEventListener("resize",sync);vv.addEventListener("scroll",keyboard)}
-  addEventListener("orientationchange",()=>setTimeout(sync,260));
-  addEventListener("resize",sync);
-  if(window.ResizeObserver)new ResizeObserver(measure).observe(comp);
-  sync();
+  if(vv){vv.addEventListener("resize",keyboard);
+         vv.addEventListener("scroll",keyboard)}
+  addEventListener("orientationchange",()=>setTimeout(keyboard,260));
+  addEventListener("resize",keyboard);
+  keyboard();
 })();
 /* Action buttons must not steal focus from the input on desktop either. */
 document.querySelectorAll(".composerow button,.msgacts button").forEach(b=>
