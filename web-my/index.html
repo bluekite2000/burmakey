@@ -99,6 +99,16 @@ padding:20px;max-width:300px}
 box-shadow:0 1px 1px rgba(0,0,0,.28);word-break:break-word;font-size:16.5px;
 line-height:1.5}
 .bub.out{align-self:flex-end;background:var(--out);border-top-right-radius:2px}
+/* incoming bubbles: the app talking to you, in the idiom it already speaks */
+.bub.in{align-self:flex-start;background:var(--in);border-top-left-radius:2px;
+max-width:88%}
+.bub.in .bt{font-size:15px;line-height:1.6}
+.bub.in .act{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.bub.in .act button{flex:0 0 auto;background:var(--acc);color:#06231c;border:0;
+border-radius:9px;padding:9px 14px;font:13px inherit;font-weight:600;
+min-height:40px;cursor:pointer}
+.bub.in .act button.ghost{background:transparent;color:var(--dim);
+border:1px solid var(--ln);font-weight:400}
 .bub .bt{display:block;font-size:19px;line-height:1.75}
 .bub .rom{display:block;font-size:11.5px;color:#9fd8c8;
 font-family:ui-monospace,Menlo,monospace;margin-top:3px;word-break:break-all}
@@ -16795,7 +16805,7 @@ function bubble(text,rom,draft,time){
 function drawMsg(){
   const t=$("thread");t.innerHTML="";
   const showrom=$("showrom").checked;
-  if(!sent.length&&!words.length){
+  if(!sent.length&&!words.length&&!nudges.length){
     const e=document.createElement("div");e.className="empty";
     e.innerHTML="<b>သင့်စာသား ဒီမှာပေါ်မယ်</b>your message appears here — "+
       "type Burglish below, tap the word you meant";
@@ -16804,6 +16814,7 @@ function drawMsg(){
     const d=document.createElement("div");d.className="daypill";
     d.textContent="ယနေ့ · today";t.appendChild(d);
   }
+  nudges.filter(n=>n.at==="top").forEach(n=>t.appendChild(nudgeEl(n)));
   sent.forEach(s=>{
     const b=bubble(s.text,showrom?s.rom:"",false,s.time);
     b.title="ကူးယူ · tap to copy";
@@ -16814,6 +16825,7 @@ function drawMsg(){
     });
     t.appendChild(b);
   });
+  nudges.filter(n=>n.at==="end").forEach(n=>t.appendChild(nudgeEl(n)));
   if(words.length){
     t.appendChild(bubble(msgText(),
       showrom?words.map(w=>w.rom||w.my).join(" "):"",true,""));
@@ -16908,6 +16920,7 @@ function exStart(){
   }
   $("exerr").hidden=true;
   ex.on=true; ex.i=0; ex.rows=[]; sent=[]; words=[]; prev=null;
+  store(seenKey,"1"); nudges.length=0;
   $("exbar").hidden=false;
   $("exprog").max=EX_ITEMS.length;
   showTab("chat");                    // back to the keyboard
@@ -16973,6 +16986,58 @@ function exFinish(){
     setTimeout(()=>{c.scrollIntoView({block:"center"});c.focus()},240);
   }
 }
+/* ---- prompts, delivered as incoming messages ---- */
+const nudges=[];
+const seenKey="burmakey.seen", fbKey="burmakey.nudged";
+function store(k,v){try{v===undefined?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}
+function stored(k){try{return localStorage.getItem(k)}catch(e){return null}}
+
+function dropNudge(n){
+  const i=nudges.indexOf(n); if(i>=0)nudges.splice(i,1);
+  if(n.key)store(n.key,"1");
+  drawMsg();
+}
+function nudgeEl(n){
+  const b=document.createElement("div");b.className="bub in";
+  const t=document.createElement("span");t.className="bt";t.innerHTML=n.html;
+  b.appendChild(t);
+  const a=document.createElement("div");a.className="act";
+  const go=document.createElement("button");go.textContent=n.cta;
+  /* acting on a prompt retires it: leaving it in the thread would nag someone
+     who already did the thing */
+  go.onclick=()=>{dropNudge(n);n.act()}; a.appendChild(go);
+  const no=document.createElement("button");no.className="ghost";
+  no.textContent="နောက်မှ · later";
+  no.onclick=()=>dropNudge(n);
+  a.appendChild(no); b.appendChild(a);
+  return b;
+}
+function addWelcome(){
+  if(stored(seenKey)||location.hash.slice(1)==="test")return;
+  nudges.push({at:"top", key:seenKey, cta:"စတင်မည် · start it",
+    html:"<b>မင်္ဂလာပါ · welcome</b><br>Type Burglish below and tap the Burmese "+
+         "word you meant — that is the whole idea.<br><br>If you have 20 minutes, "+
+         "the <b>guided test</b> helps us far more than a quick try: it turns "+
+         "your session into a number we can check our simulation against, and "+
+         "it is the only way we learn how <i>you</i> spell Burglish.",
+    act:()=>{store(seenKey,"1");showTab("help");
+             setTimeout(()=>{const b=$("exgo");if(b)b.scrollIntoView({block:"center"})},150)}});
+}
+function maybeFeedbackNudge(){
+  if(ex.on||stored(fbKey)||nudges.some(n=>n.at==="end"))return;
+  const mins=(Date.now()-M.start)/60000;
+  if(M.commits<15||mins<5)return;
+  nudges.push({at:"end", key:fbKey, cta:"မေးခွန်း ၂ ခု · two questions",
+    html:"<b>ခဏလောက် · got a minute?</b><br>You have typed "+M.commits+
+         " words. Which ones came out wrong, and which spellings felt "+
+         "unnatural? That is the part we cannot measure — only you can tell us.",
+    act:()=>{store(fbKey,"1");showTab("help");
+             const c=$("cmt");
+             if(c){c.placeholder="ဘယ်စာလုံးတွေ မှားလဲ · which words came out wrong?";
+                   setTimeout(()=>{c.scrollIntoView({block:"center"});c.focus()},200)}}});
+  drawMsg();
+}
+setInterval(maybeFeedbackNudge,20000);
 /* ---- tabs ---- */
 /* one header affordance, like a chat app: info opens the about pane and
    turns into a close button */
@@ -17028,6 +17093,7 @@ addEventListener("hashchange",routeHash);
 /* Action buttons must not steal focus from the input on desktop either. */
 document.querySelectorAll(".composerow button").forEach(b=>
   b.addEventListener("pointerdown",e=>{if(e.pointerType==="mouse")e.preventDefault()}));
+addWelcome();
 drawMsg();
 render();
 routeHash();
