@@ -146,6 +146,58 @@ supported: ship BOTH input modes over one engine. The engine is the product;
 input codes are skins.
 
 
+## Long-horizon learning dynamics (`src/longrun.py`)
+
+Every other number in this study is a SINGLE pass with fresh state, which
+cannot say what on-device learning is worth over weeks or whether it goes
+wrong. 24 simulated users x 20 days x 30 msgs/day, each
+user on their own primary topic (k-means over content-word tf-idf; myPOS has
+no topic metadata). The prior is pretrained on one half of the corpus and
+every user stream is drawn from the disjoint other half without replacement.
+This is NOT a competitor benchmark: simulated chatters only resample corpus
+statistics we already have, so these are statements about engine mechanics,
+not about people.
+
+**Q1 — learning compounds, it does not saturate.** Against a `frozen` control
+(same engine, learning off), the saving grows from **6.1% on day 1 to
+10.2% on day 20**, still rising at the end. The control is flat
+(2.767 -> 2.755), which is what shows the gain is learning rather
+than easier text. A three-week-old keyboard is measurably better than a
+freshly installed one.
+
+**Q2 — a stale prior is harmless after a topic change.** Cohort designs
+(switchers vs non-switchers) are confounded — different people, different
+text, so they measure topic difficulty. Instead all arms type IDENTICAL
+evaluation text and differ only in history: cold 2.572, primed on the
+same topic 2.526 (-1.8%), primed on a different topic
+2.571 (-0.0%). A topic change costs you the *benefit*
+of priming, not a penalty — the engine degrades to its shipped prior instead
+of fighting the user. (8 topic pairs.)
+
+**Q3 — between-user spread is bigger than the design differences.** Mean
+taps/word ranges 2.412..2.699 across 24 users — a spread of
+11% of the median, larger than the entire
+3-6% gap between BurmaKey and the hypothetical ideal-engine script keyboard.
+Any single headline number, including ours, hides more variation than the
+design argument is about.
+
+**Q4 — state growth is linear and needs a pruning policy.** Above the shipped
+prior, per-user state grows **5.1 KB/day** (1.8 MB/year)
+with no sign of levelling by day 20 (940
+recency entries, 2,909 learned prefixes).
+Fine for year one, untenable forever. Nothing in the engine prunes today.
+
+**Q5 — the unbounded recency counter is CORRECT; do not "fix" it.** The
+shipped rule scores recency as a lifetime count that never decays, which
+looked like a bug waiting to happen. Replaying identical streams: unbounded
+2.534 overall, exponential decay (half-life 200 words)
+2.555 (+0.8%), cap at 5
+2.550 (+0.6%). Forgetting throws away exactly
+the signal that makes learning compound. The obvious hardening would have made
+the keyboard slower.
+
+Reproduce: `python3 src/longrun.py` (seed 20260817, ~90s).
+
 ## Chat-register simulation and the try-it web keyboard
 
 myPOS is news register; a simulated chat stream (600 messages, 3,308 words

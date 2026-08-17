@@ -1,6 +1,8 @@
 # regenerable artifacts (run the pipeline in src/)
 burmese_results.json
 try-burmese.html
+# k-means cache, regenerated on first run
+longrun_topics.json
 mm_data.pkl
 weblex_my.txt
 __pycache__/

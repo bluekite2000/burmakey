@@ -141,6 +141,18 @@ th:first-child,td:first-child{text-align:left;color:var(--text-secondary);
   white-space:normal;min-width:148px}
 th{color:var(--muted);font-weight:500;font-size:12px}
 
+/* line + dot charts: same recessive chrome as the bar charts. They keep a
+   legible minimum width and scroll inside their own box on a phone rather
+   than shrinking their labels into illegibility. */
+.linefig{--lab:0px;--gut:0px;--gap:0px}
+.svgwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain}
+.svgwrap svg{display:block;width:100%;min-width:480px;height:auto}
+.svgwrap .gl{stroke:var(--grid);stroke-width:1}
+.svgwrap .ax{stroke:var(--baseline);stroke-width:1}
+.svgwrap .tk{fill:var(--muted);font:11px system-ui,-apple-system,sans-serif;
+  font-variant-numeric:tabular-nums}
+h3{font-size:16.5px;margin:30px 0 8px;letter-spacing:-.01em}
 .callout{background:var(--pan);border:1px solid var(--ln);border-left:3px solid var(--acc);
   border-radius:0 13px 13px 0;padding:14px 16px;margin:20px 0}
 .callout p:last-child{margin-bottom:0}
@@ -576,6 +588,232 @@ this as a floor, not an estimate.</p>
 real syntax rather than from the lexicon: scramble the word order and the
 bigram prior stops paying. Real chat sits between this floor and the +18%
 measured on real sentences.</p>
+
+<h2>What happens after day one</h2>
+<p class="sub">The engine learns on the device. Every result above is a single
+pass with fresh state, so none of it can say what that learning is worth over
+weeks — or whether it goes wrong.</p>
+
+<p>This section is deliberately <b>not</b> a competitor comparison. Simulated
+chatters cannot manufacture information about human behaviour; they can only
+resample corpus statistics we already have. What they can do is exercise the
+engine's own state over a horizon the single-pass test never reaches. Every
+number below is a statement about the engine's mechanics.</p>
+
+<p><b>Setup.</b> 24 simulated users, 20 days,
+30 messages a day — 600 messages each,
+around four thousand scored words. Users are given
+different primary topics (derived by k-means over content-word tf-idf, since
+myPOS has no topic metadata) so their vocabularies genuinely differ. The
+bigram prior is pretrained on one half of the corpus; every user's stream is
+drawn from the <b>disjoint</b> other half and sampled without replacement, so
+no user ever types text the prior has seen, and nothing is scored twice.</p>
+
+<figure class="chart linefig">
+<figcaption>What on-device learning is worth, day by day</figcaption>
+<p class="csub">Lower is better. <b>frozen</b> is the same engine with
+learning switched off — the control that isolates learning from day-to-day
+variation in the text itself.</p>
+<div class="legend">
+  <span style="--c:var(--deemph)"><i></i>frozen — learning off (control)</span>
+  <span style="--c:var(--series-1)"><i></i>learning on (what ships)</span>
+</div>
+<div class="svgwrap"><svg viewBox="0 0 560 250" role="img" aria-label="Taps per word by day: the learning engine improves from 2.60 to 2.47 while the no-learning control stays flat near 2.76">
+<line x1="54" y1="198.0" x2="540" y2="198.0" class="gl"/>
+<text x="46" y="202.0" class="tk" text-anchor="end">2.4</text>
+<line x1="54" y1="154.0" x2="540" y2="154.0" class="gl"/>
+<text x="46" y="158.0" class="tk" text-anchor="end">2.5</text>
+<line x1="54" y1="110.0" x2="540" y2="110.0" class="gl"/>
+<text x="46" y="114.0" class="tk" text-anchor="end">2.6</text>
+<line x1="54" y1="66.0" x2="540" y2="66.0" class="gl"/>
+<text x="46" y="70.0" class="tk" text-anchor="end">2.7</text>
+<line x1="54" y1="22.0" x2="540" y2="22.0" class="gl"/>
+<text x="46" y="26.0" class="tk" text-anchor="end">2.8</text>
+<line x1="54" y1="198" x2="540" y2="198" class="ax"/>
+<text x="54.0" y="216" class="tk" text-anchor="middle">1</text>
+<text x="156.3" y="216" class="tk" text-anchor="middle">5</text>
+<text x="284.2" y="216" class="tk" text-anchor="middle">10</text>
+<text x="412.1" y="216" class="tk" text-anchor="middle">15</text>
+<text x="540.0" y="216" class="tk" text-anchor="middle">20</text>
+<text x="54" y="244" class="tk">day</text>
+<polyline points="54.0,36.4 79.6,37.4 105.2,44.7 130.7,48.4 156.3,47.0 181.9,55.8 207.5,42.6 233.1,44.6 258.6,39.4 284.2,41.5 309.8,51.8 335.4,30.3 360.9,34.4 386.5,40.8 412.1,31.9 437.7,35.0 463.3,28.0 488.8,45.8 514.4,39.4 540.0,41.6" fill="none" stroke="#59606e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity='.85'/>
+<circle cx="540.0" cy="41.6" r="4.5" fill="#59606e" stroke="#171a21" stroke-width="2"/>
+<polyline points="54.0,110.4 79.6,112.1 105.2,118.9 130.7,127.8 156.3,126.6 181.9,140.3 207.5,132.2 233.1,135.7 258.6,137.5 284.2,133.5 309.8,148.5 335.4,126.7 360.9,136.3 386.5,153.3 412.1,149.9 437.7,148.6 463.3,146.9 488.8,166.2 514.4,164.3 540.0,165.8" fill="none" stroke="#3987e5" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="540.0" cy="165.8" r="4.5" fill="#3987e5" stroke="#171a21" stroke-width="2"/>
+</svg></div>
+<details class="tbl"><summary>Table view</summary><div class="scroll-x">
+<table><thead><tr><th>Day</th><th>frozen</th><th>learning on</th>
+<th>saving</th></tr></thead><tbody>
+<tr><td>1</td><td>2.767</td><td>2.599</td><td>6.1%</td></tr><tr><td>2</td><td>2.765</td><td>2.595</td><td>6.1%</td></tr><tr><td>3</td><td>2.748</td><td>2.580</td><td>6.1%</td></tr><tr><td>4</td><td>2.740</td><td>2.560</td><td>6.6%</td></tr><tr><td>5</td><td>2.743</td><td>2.562</td><td>6.6%</td></tr><tr><td>6</td><td>2.723</td><td>2.531</td><td>7.0%</td></tr><tr><td>7</td><td>2.753</td><td>2.549</td><td>7.4%</td></tr><tr><td>8</td><td>2.749</td><td>2.542</td><td>7.5%</td></tr><tr><td>9</td><td>2.761</td><td>2.538</td><td>8.1%</td></tr><tr><td>10</td><td>2.756</td><td>2.547</td><td>7.6%</td></tr><tr><td>11</td><td>2.732</td><td>2.512</td><td>8.0%</td></tr><tr><td>12</td><td>2.781</td><td>2.562</td><td>7.9%</td></tr><tr><td>13</td><td>2.772</td><td>2.540</td><td>8.4%</td></tr><tr><td>14</td><td>2.757</td><td>2.502</td><td>9.3%</td></tr><tr><td>15</td><td>2.778</td><td>2.509</td><td>9.7%</td></tr><tr><td>16</td><td>2.770</td><td>2.512</td><td>9.3%</td></tr><tr><td>17</td><td>2.786</td><td>2.516</td><td>9.7%</td></tr><tr><td>18</td><td>2.746</td><td>2.472</td><td>10.0%</td></tr><tr><td>19</td><td>2.760</td><td>2.477</td><td>10.3%</td></tr><tr><td>20</td><td>2.755</td><td>2.473</td><td>10.2%</td></tr>
+</tbody></table></div></details>
+</figure>
+
+<div class="callout">
+<p><b>Learning compounds; it does not saturate.</b> The saving over the
+no-learning control grows from <b>6.1% on day 1 to 10.2% on day
+20</b>, still rising at the end of the run. The control stays flat
+(2.767 to 2.755), which is what tells us the improvement
+is the engine learning rather than the text getting easier.</p>
+<p>This matters for how the product is described. &ldquo;It learns your
+words&rdquo; is not a first-session nicety — on this evidence the keyboard a
+user has had for three weeks is measurably better than the one they installed,
+and the gap was still widening when the simulation stopped.</p>
+</div>
+
+<h3>Does a stale prior hurt after a topic change?</h3>
+<p>The obvious way to test this — compare users who switch topic against users
+who do not — is confounded: those are different people typing different text,
+so the difference measures topic difficulty, not switching. Instead all three
+arms below type the <b>identical</b> evaluation text and differ only in the
+history the engine carries into it.</p>
+
+<div class="scroll-x">
+<table>
+<thead><tr><th>Engine history before the evaluation text</th>
+<th>taps/word</th><th>vs cold</th></tr></thead>
+<tbody>
+<tr><td>cold — no history, shipped prior only</td><td>2.572</td><td>—</td></tr>
+<tr><td>primed on the <b>same</b> topic</td><td>2.526</td>
+<td>-1.8%</td></tr>
+<tr><td>primed on a <b>different</b> topic</td><td>2.571</td>
+<td>-0.0%</td></tr>
+</tbody></table></div>
+<p class="sub">Mean over 8 topic pairs.</p>
+
+<p><b>A stale prior is harmless.</b> Priming on the wrong topic lands within
+0.0% of cold — the learned state neither helps nor
+gets in the way, and chunked results show it tracking the cold arm across the
+whole evaluation stream rather than recovering from a dip. What a topic change
+costs you is the <i>benefit</i> (1.8% when the history
+matches), not a penalty. That is the desirable failure mode: the engine
+degrades to its shipped prior instead of fighting you.</p>
+
+<h3>How much does this vary between users?</h3>
+<figure class="chart linefig">
+<figcaption>Mean taps per word, one dot per simulated user</figcaption>
+<p class="csub">Same engine, same number of messages — the spread is
+vocabulary alone.</p>
+<div class="svgwrap"><svg viewBox="0 0 560 96" role="img" aria-label="One dot per simulated user, mean taps per word">
+<line x1="26" y1="46" x2="534" y2="46" class="ax"/>
+<line x1="55.9" y1="40" x2="55.9" y2="52" class="gl"/>
+<text x="55.9" y="70" class="tk" text-anchor="middle">2.40</text>
+<line x1="130.6" y1="40" x2="130.6" y2="52" class="gl"/>
+<text x="130.6" y="70" class="tk" text-anchor="middle">2.45</text>
+<line x1="205.3" y1="40" x2="205.3" y2="52" class="gl"/>
+<text x="205.3" y="70" class="tk" text-anchor="middle">2.50</text>
+<line x1="280.0" y1="40" x2="280.0" y2="52" class="gl"/>
+<text x="280.0" y="70" class="tk" text-anchor="middle">2.55</text>
+<line x1="354.7" y1="40" x2="354.7" y2="52" class="gl"/>
+<text x="354.7" y="70" class="tk" text-anchor="middle">2.60</text>
+<line x1="429.4" y1="40" x2="429.4" y2="52" class="gl"/>
+<text x="429.4" y="70" class="tk" text-anchor="middle">2.65</text>
+<line x1="504.1" y1="40" x2="504.1" y2="52" class="gl"/>
+<text x="504.1" y="70" class="tk" text-anchor="middle">2.70</text>
+<circle cx="74.5" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.412 taps/word</title></circle>
+<circle cx="88.4" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.422 taps/word</title></circle>
+<circle cx="94.8" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.426 taps/word</title></circle>
+<circle cx="99.7" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.429 taps/word</title></circle>
+<circle cx="139.3" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.456 taps/word</title></circle>
+<circle cx="139.9" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.456 taps/word</title></circle>
+<circle cx="153.3" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.465 taps/word</title></circle>
+<circle cx="200.4" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.497 taps/word</title></circle>
+<circle cx="208.1" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.502 taps/word</title></circle>
+<circle cx="214.5" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.506 taps/word</title></circle>
+<circle cx="215.2" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.507 taps/word</title></circle>
+<circle cx="218.2" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.509 taps/word</title></circle>
+<circle cx="222.8" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.512 taps/word</title></circle>
+<circle cx="231.4" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.517 taps/word</title></circle>
+<circle cx="250.0" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.530 taps/word</title></circle>
+<circle cx="254.1" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.533 taps/word</title></circle>
+<circle cx="317.7" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.575 taps/word</title></circle>
+<circle cx="343.1" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.592 taps/word</title></circle>
+<circle cx="402.5" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.632 taps/word</title></circle>
+<circle cx="403.1" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.632 taps/word</title></circle>
+<circle cx="407.4" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.635 taps/word</title></circle>
+<circle cx="479.8" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.684 taps/word</title></circle>
+<circle cx="482.7" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.686 taps/word</title></circle>
+<circle cx="502.9" cy="32" r="5" fill="#3987e5" fill-opacity=".75" stroke="#171a21" stroke-width="2"><title>2.699 taps/word</title></circle>
+<line x1="222.8" y1="16" x2="222.8" y2="42" stroke="#e6e9ef" stroke-width="2"/>
+<text x="222.8" y="12" class="tk" text-anchor="middle" fill="#e6e9ef">median 2.512</text>
+<text x="26" y="92" class="tk">mean taps per word, one dot per user</text>
+</svg></div>
+</figure>
+<p>Across 24 users the mean ranges from <b>2.412 to
+2.699</b> taps per word — a spread of 0.287, or
+11% of the median. That is
+<b>larger than the entire measured gap</b> between BurmaKey and the
+hypothetical ideal-engine script keyboard (3–6%). Any single headline number
+for this keyboard, including ours, hides more variation than the design
+differences everyone argues about.</p>
+
+<h3>Does the state stay inside a phone-sized budget?</h3>
+<figure class="chart linefig">
+<figcaption>Learned state per user, above the shipped prior</figcaption>
+<p class="csub">Recency table, user bigrams and learned prefixes. The shipped
+prior is a fixed asset and is excluded.</p>
+<div class="svgwrap"><svg viewBox="0 0 560 250" role="img" aria-label="Per-user learned state grows linearly from 12 KB on day 1 to 110 KB on day 20">
+<line x1="54" y1="198.0" x2="540" y2="198.0" class="gl"/>
+<text x="46" y="202.0" class="tk" text-anchor="end">0</text>
+<line x1="54" y1="154.0" x2="540" y2="154.0" class="gl"/>
+<text x="46" y="158.0" class="tk" text-anchor="end">30</text>
+<line x1="54" y1="110.0" x2="540" y2="110.0" class="gl"/>
+<text x="46" y="114.0" class="tk" text-anchor="end">60</text>
+<line x1="54" y1="66.0" x2="540" y2="66.0" class="gl"/>
+<text x="46" y="70.0" class="tk" text-anchor="end">90</text>
+<line x1="54" y1="22.0" x2="540" y2="22.0" class="gl"/>
+<text x="46" y="26.0" class="tk" text-anchor="end">120</text>
+<line x1="54" y1="198" x2="540" y2="198" class="ax"/>
+<text x="54.0" y="216" class="tk" text-anchor="middle">1</text>
+<text x="156.3" y="216" class="tk" text-anchor="middle">5</text>
+<text x="284.2" y="216" class="tk" text-anchor="middle">10</text>
+<text x="412.1" y="216" class="tk" text-anchor="middle">15</text>
+<text x="540.0" y="216" class="tk" text-anchor="middle">20</text>
+<text x="54" y="244" class="tk">day</text>
+<polyline points="54.0,180.1 79.6,167.5 105.2,156.9 130.7,147.4 156.3,138.0 181.9,129.8 207.5,122.2 233.1,113.8 258.6,104.7 284.2,97.7 309.8,91.4 335.4,86.2 360.9,80.1 386.5,72.7 412.1,68.6 437.7,61.5 463.3,55.0 488.8,49.9 514.4,42.7 540.0,37.1" fill="none" stroke="#3987e5" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="540.0" cy="37.1" r="4.5" fill="#3987e5" stroke="#171a21" stroke-width="2"/>
+</svg></div>
+</figure>
+<p>Growth is <b>linear at 5.1 KB/day</b> — about
+1.8 MB a year — with no sign of levelling off by day 20
+(940 recency entries,
+2,909 learned prefixes). That is
+comfortable for a phone in year one and untenable forever, so the design needs
+a pruning policy before it ships. Nothing in the current engine has one.</p>
+
+<h3>Does the unbounded recency counter need a decay?</h3>
+<p>The shipped engine scores recency as a <i>lifetime count</i>
+(<code>+10 per use</code>) that never decays. That looked like a bug waiting
+to happen over thousands of words, so the same streams were replayed under two
+alternatives: exponential forgetting (half-life 200 words)
+and a hard cap at 5 uses.</p>
+
+<div class="scroll-x">
+<table>
+<thead><tr><th>Recency rule</th><th>Day 1</th><th>Day 20</th>
+<th>Overall</th></tr></thead>
+<tbody>
+<tr><td>learning off (control)</td><td>2.767</td>
+<td>2.755</td><td>2.757</td></tr>
+<tr><td><b>unbounded count — what ships</b></td><td>2.599</td>
+<td><b>2.473</b></td><td><b>2.534</b></td></tr>
+<tr><td>exponential decay</td><td>2.600</td><td>2.520</td>
+<td>2.555</td></tr>
+<tr><td>capped at 5</td><td>2.599</td>
+<td>2.506</td><td>2.550</td></tr>
+</tbody></table></div>
+
+<p><b>The hypothesis was wrong: the unbounded counter is the best of the
+three.</b> Decay costs +0.8% and a cap
+costs +0.6% against what already ships.
+Forgetting throws away exactly the signal that makes learning compound. This
+is a result worth recording precisely because it says <i>do not fix it</i> —
+the obvious hardening would have made the keyboard slower.</p>
+
+<p class="sub">Reproduce: <code>python3 src/longrun.py</code>
+(24 users &times; 20 days &times; 30 msgs,
+seed 20260817, ~90s). These are engine mechanics measured on resampled
+corpus text — they say nothing about how real people behave, and the
+perfect-typist assumption from the earlier sections still applies throughout.</p>
 
 <h2>Method</h2>
 <p>myG2P provides 24,802 words with tone-marked romanizations. Mining its

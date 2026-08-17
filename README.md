@@ -39,6 +39,15 @@ Zawgyi/Unicode split.
   corrections are less flattering than the earlier tap-count claims of −52%
   and "a statistical tie". **The engine, not the Latin input code, is the
   measured advantage.**
+- **Long-horizon behaviour** (20 simulated days, `src/longrun.py`):
+  on-device learning **compounds rather than saturating** — 6.1% better
+  than a no-learning control on day 1, 10.2% by day 20, still improving.
+  A topic change costs the benefit of priming but carries no penalty
+  (-0.0% vs cold). Between-user spread
+  (11% of the median) is larger than the
+  gap between input designs. Per-user state grows 5.1 KB/day and needs a
+  pruning policy. And the unbounded recency counter that looked like a bug is
+  the best of three rules tested — decay and capping both make it slower.
 - Corpus pretraining helps here (+0.10 taps saved, zero-key 14.7→17.9%)
   because train and test share register. Pretraining on a *mismatched* register
   hurts instead, so the corpus has to match the target register.
@@ -90,6 +99,7 @@ cd src
 python3 burmese.py        # iteration 1: dictionary-only romanizer (biased, kept for the record)
 python3 burmese2.py       # iteration 2: syllable romanizer, 87.3% coverage, headline numbers
 python3 h2h_mobile.py --sweep   # head-to-head vs Bagan/TTKeyboard, mobile cost model
+python3 longrun.py        # long-horizon learning dynamics (24 users x 20 days)
 python3 mm_chat.py        # chat-register simulation (needs mm_data.pkl, see below)
 python3 build_web_my.py   # regenerate the web keyboard (needs weblex_my.txt, see below)
 ```
