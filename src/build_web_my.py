@@ -573,7 +573,8 @@ function drawMsg(){
   if(!msgs.length&&!words.length){
     const e=document.createElement("div");e.className="empty";
     e.innerHTML="<b>သင့်စာသား ဒီမှာပေါ်မယ်</b>your message appears here — "+
-      "type Burglish below, tap the word you meant";
+      "type Burglish below, tap the word you meant."+
+      "<br><br>Type <b>help</b> for the keys.";
     t.appendChild(e);
   }else{
     const d=document.createElement("div");d.className="daypill";
@@ -630,6 +631,11 @@ function drawMsg(){
 function sendMsg(){
   const t=msgText();
   if(!t)return;
+  /* also catch it if they tapped the "as typed" chip and then sent */
+  if(!convo.mode&&HELPWORDS.includes(t.trim().toLowerCase())){
+    words=[];prev=null;drawMsg();render();sayKeys();
+    $("inp").focus({preventScroll:true});return;
+  }
   heard(t,words.map(w=>w.rom||w.my).join(" "));
   words=[];prev=null;
   navigator.clipboard.writeText(t).catch(()=>{});
@@ -659,6 +665,9 @@ $("inp").addEventListener("keydown",e=>{
   }
   if(e.key===" "||e.key==="Enter"){
     e.preventDefault();
+    if(HELPWORDS.includes($("inp").value.trim().toLowerCase())&&!words.length){
+      $("inp").value="";render();sayKeys();return;
+    }
     const txt=$("inp").value.trim().toLowerCase().replace(/[^a-z]/g,"");
     if(!txt){
       const rest=$("inp").value.trim();
@@ -673,6 +682,19 @@ $("inp").addEventListener("keydown",e=>{
   }
 });
 
+/* typing "help" is the whole help system: no menu, no screen */
+const HELPWORDS=["help","?","အကူအညီ"];
+function sayKeys(){
+  say("<b>ခလုတ်များ · the keys</b><br>You use your phone's own keyboard — "+
+      "there is no new layout to learn.<br><br>"+
+      "<b>space</b> — takes the highlighted word<br>"+
+      "<b>backspace</b> — deletes the last word once the box is empty<br>"+
+      "<b>enter</b> — sends<br>"+
+      "<b>123</b> — offers ၀-၉ or 0-9<br>"+
+      "<b>. ,</b> — offers ။ and ၊, also always on the strip<br>"+
+      "<b>space twice</b> — a real space, for mixing English in<br><br>"+
+      "<span class='dim'>Type <b>help</b> any time to see this again.</span>");
+}
 /* ================= the conversation ================= */
 const convo={mode:null,i:0,rows:[],answers:[],snap:null,t0:0};
 function snap(){
@@ -752,7 +774,8 @@ function testStop(){
   convo.mode=null;store(seenKey,"1");
   if(convo.rows.length){M.exercise=convo.rows;beacon({event:"exercise"})}
   say("ရပါတယ် · stopped — thank you for the "+convo.rows.length+
-      " you did. Type whatever you like now.");
+      " you did. Type whatever you like now."+
+      "<br><span class='dim'>Type <b>help</b> for the keys.</span>");
 }
 function testFinish(){
   convo.mode=null;store(seenKey,"1");
@@ -763,7 +786,8 @@ function testFinish(){
   say("<b>ပြီးပါပြီ · that's all of them — thank you.</b><br>"+
       convo.rows.length+" tasks · "+tw+" words · <b>"+(tw?(tt/tw).toFixed(2):"—")+
       "</b> taps per word · "+ok+"/"+scored.length+" copied exactly.<br>"+
-      "<span class='dim'>Your results are already sent.</span>");
+      "<span class='dim'>Your results are already sent. "+
+      "Type <b>help</b> any time for the keys.</span>");
   M.exercise=convo.rows;
   beacon({event:"exercise"});
   setTimeout(fbStart,1100);
