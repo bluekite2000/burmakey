@@ -48,11 +48,24 @@ display:flex;align-items:center;justify-content:center}
 .hicons button:active{background:rgba(255,255,255,.08)}
 .hicons button[aria-expanded=true]{color:var(--acc)}
 
+/* ---------- top-level tabs ---------- */
+.tabs{flex:0 0 auto;display:flex;background:var(--head);
+border-bottom:1px solid var(--ln);padding:0 4px}
+.tabs button{flex:1 1 0;background:none;border:0;color:var(--dim);
+font:13px inherit;padding:9px 2px 8px;min-height:40px;cursor:pointer;
+border-bottom:2px solid transparent;touch-action:manipulation;
+-webkit-user-select:none;user-select:none;white-space:nowrap;
+overflow:hidden;text-overflow:ellipsis}
+.tabs button[aria-selected=true]{color:var(--acc);border-bottom-color:var(--acc);
+font-weight:600}
+.tabs button:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+/* typing gets the whole screen: the bar steps aside while the keyboard is up */
+.app.kbup .tabs{display:none}
 .pane{flex:1 1 auto;min-height:0}
 [hidden]{display:none!important}
 
 /* ---------- thread ---------- */
-#pane-type{display:flex;flex-direction:column}
+#pane-chat{display:flex;flex-direction:column}
 .thread{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
 overscroll-behavior-y:contain;padding:12px 9px 6px;
 display:flex;flex-direction:column;gap:5px;
@@ -157,7 +170,7 @@ padding:14px;display:flex;flex-direction:column;gap:10px}
 .exstart p{margin:0;font-size:12.5px;color:var(--dim);line-height:1.6}
 
 /* ---------- More pane ---------- */
-#pane-more{overflow-y:auto;-webkit-overflow-scrolling:touch;
+#pane-test,#pane-fb,#pane-about{overflow-y:auto;-webkit-overflow-scrolling:touch;
 overscroll-behavior-y:contain;display:flex;flex-direction:column;gap:12px;
 padding:14px 14px calc(16px + env(safe-area-inset-bottom))}
 button{background:var(--pill);border:1px solid var(--ln);color:var(--ink);
@@ -200,14 +213,20 @@ a{color:#53bdeb}
   <b>မြန်မာစာရိုက်</b>
   <span id="presence">Burglish ရိုက် · မြန်မာစာ ထွက်</span>
  </div>
- <div class="hicons">
-  <button id="infobtn" aria-expanded="false" aria-controls="pane-more"
-   aria-label="အချက်အလက် · about, privacy and feedback"
-   onclick="toggleMore()">&#9432;</button>
- </div>
 </div>
 
-<section class="pane" id="pane-type">
+<nav class="tabs" role="tablist" aria-label="အပိုင်းများ · sections">
+ <button role="tab" id="tab-chat"  aria-selected="true"  aria-controls="pane-chat"
+  aria-label="စကား · Chat" onclick="showTab('chat')">စကား</button>
+ <button role="tab" id="tab-test"  aria-selected="false" aria-controls="pane-test"
+  aria-label="လေ့ကျင့်ခန်း · Test" onclick="showTab('test')">လေ့ကျင့်</button>
+ <button role="tab" id="tab-fb"    aria-selected="false" aria-controls="pane-fb"
+  aria-label="သင့်အမြင် · Feedback" onclick="showTab('fb')">အမြင်</button>
+ <button role="tab" id="tab-about" aria-selected="false" aria-controls="pane-about"
+  aria-label="အကြောင်း · About" onclick="showTab('about')">အကြောင်း</button>
+</nav>
+
+<section class="pane" id="pane-chat" role="tabpanel" aria-labelledby="tab-chat">
  <div class="exbar" id="exbar" hidden>
   <div class="exhead">
    <span id="exnum">1 / 18</span>
@@ -238,13 +257,7 @@ a{color:#53bdeb}
  </div>
 </section>
 
-<section class="pane" id="pane-more" hidden>
-<p class="sub">Burglish ရိုက်နေကျအတိုင်း ရိုက်ပါ — အသံထွက်အတိုင်း — မှန်တဲ့စာလုံးကို နှိပ်ပါ
-· type Burglish the way it sounds, tap the right word, get real Burmese</p>
-
-<div class="stats" id="stats"></div>
-<label><input type="checkbox" id="showrom">show Burglish under words</label>
-
+<section class="pane" id="pane-test" role="tabpanel" aria-labelledby="tab-test" hidden>
 <div class="exstart">
 <h2>လေ့ကျင့်ခန်း · guided test <span style="color:var(--dim);font-weight:400">(~20 min)</span></h2>
 <p>18 short tasks: copy 10 sentences, 5 tricky ones (numbers, punctuation,
@@ -257,6 +270,9 @@ to you, and the 3 free messages are yours to choose. Nothing else is recorded.</
 <button class="pri" id="exgo" onclick="exStart()">စတင်မည် · start the test</button>
 </div>
 
+</section>
+
+<section class="pane" id="pane-fb" role="tabpanel" aria-labelledby="tab-fb" hidden>
 <div class="fb">
 <h2>သင့်အမြင် · your feedback</h2>
 <div class="thumbs">
@@ -274,6 +290,12 @@ order. Off by default. Tap to preview exactly what would be sent.</label>
 <button class="pri" onclick="sendFeedback()" id="sendbtn">📨 ပို့မည် · send feedback</button>
 </div>
 
+</section>
+
+<section class="pane" id="pane-about" role="tabpanel" aria-labelledby="tab-about" hidden>
+<p class="sub">Burglish ရိုက်နေကျအတိုင်း ရိုက်ပါ — အသံထွက်အတိုင်း — မှန်တဲ့စာလုံးကို နှိပ်ပါ · type Burglish the way it sounds, tap the right word, get real Burmese</p>
+<label><input type="checkbox" id="showrom">show Burglish under words</label>
+<div class="stats" id="stats"></div>
 <div class="foot">
 <b>ခလုတ်များ · the keys</b><br>
 You use your phone's own keyboard — there is no new layout to learn.<br>
@@ -16574,9 +16596,15 @@ function sendFeedback(){
  setTimeout(()=>b.textContent="📨 ပို့မည် · send feedback",1800);
 }
 function drawStats(){
- const el=document.getElementById("stats");
- if(!M.commits){el.textContent="";return}
- el.textContent=`session: ${M.commits} words · `+
+ /* the header subtitle is where a chat app shows "last seen"; putting the
+    session figures there costs no layout height and keeps them in view */
+ const el=document.getElementById("presence");
+ if(!M.commits){el.textContent="Burglish ရိုက် · မြန်မာစာ ထွက်";return}
+ el.textContent=`${M.commits} words · ${(M.keys/M.commits).toFixed(1)} keys/word`+
+  ` · 1st right ${Math.round(100*M.top1/M.commits)}%`+
+  (M.raw?` · unknown ${M.raw}`:``);
+ const full=document.getElementById("stats");
+ if(full)full.textContent=`session: ${M.commits} words · `+
   `${(M.keys/M.commits).toFixed(1)} keys/word · `+
   `first suggestion right ${Math.round(100*M.top1/M.commits)}% · unknown ${M.raw}`;
 }
@@ -16871,7 +16899,7 @@ function exStart(){
   ex.on=true; ex.i=0; ex.rows=[]; sent=[]; words=[]; prev=null;
   $("exbar").hidden=false;
   $("exprog").max=EX_ITEMS.length;
-  toggleMore();                       // back to the keyboard
+  showTab("chat");                    // back to the keyboard
   exShow();
 }
 function exShow(){
@@ -16918,7 +16946,7 @@ function exFinish(){
   d.innerHTML="<b>ကျေးဇူးတင်ပါတယ် · thank you!</b><br>"+
     ex.rows.length+" tasks · "+tw+" words · <b>"+(tw?(tt/tw).toFixed(2):"—")+
     "</b> taps/word · "+okN+"/"+scored.length+" copied exactly · "+secs+"s<br>"+
-    "<span style='color:var(--dim)'>Now tap ⓘ and press <b>send feedback</b> so we get it. "+
+    "<span style='color:var(--dim)'>Now open the <b>အမြင် · Feedback</b> tab and press send. "+
     "Please add a comment about which words came out wrong.</span>";
   $("thread").appendChild(d);
   $("thread").scrollTop=$("thread").scrollHeight;
@@ -16928,16 +16956,14 @@ function exFinish(){
 /* ---- tabs ---- */
 /* one header affordance, like a chat app: info opens the about pane and
    turns into a close button */
-function toggleMore(){
-  const more=$("pane-more"),open=more.hidden;
-  more.hidden=!open;
-  $("pane-type").hidden=open;
-  const b=$("infobtn");
-  b.setAttribute("aria-expanded",open);
-  b.innerHTML=open?"&#10005;":"&#9432;";
-  b.setAttribute("aria-label",open?"ပိတ်ရန် · back to typing"
-                                 :"အချက်အလက် · about, privacy and feedback");
-  if(!open)$("inp").focus({preventScroll:true});
+const TABS=["chat","test","fb","about"];
+function showTab(which){
+  TABS.forEach(t=>{
+    $("pane-"+t).hidden = (t!==which);
+    $("tab-"+t).setAttribute("aria-selected", t===which);
+  });
+  if(which==="chat")$("inp").focus({preventScroll:true});
+  else $("inp").blur();
 }
 /* ---- keep the app sized to what the OS keyboard leaves us ----
    iOS Safari does not shrink the layout viewport when the keyboard opens, so
@@ -16953,8 +16979,11 @@ function toggleMore(){
     /* visualViewport.height already excludes the OS keyboard and Safari's
        toolbars, so the shell needs no arithmetic to stay fully visible. */
     root.style.setProperty("--vh",vv.height+"px");
-    root.style.setProperty("--kb",
-      Math.max(0,window.innerHeight-(vv.height+vv.offsetTop))+"px");
+    const covered=Math.max(0,window.innerHeight-(vv.height+vv.offsetTop));
+    root.style.setProperty("--kb",covered+"px");
+    /* typing gets the whole screen: the tab bar steps aside while the OS
+       keyboard is up and returns when it closes */
+    document.querySelector(".app").classList.toggle("kbup",covered>60);
     /* iOS still scrolls the document to reveal the focused input even with a
        pinned root; undo it so the chat header cannot drift off the top. */
     if(window.scrollY||window.scrollX)window.scrollTo(0,0);
