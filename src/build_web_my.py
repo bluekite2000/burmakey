@@ -1,56 +1,105 @@
 data = open("weblex_my.txt").read()
 
 html = r'''<!DOCTYPE html><html lang="my"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <title>မြန်မာစာရိုက် — type Burmese with English letters</title><style>
 :root{--bg:#0f1115;--pan:#171a21;--ln:#252a34;--ink:#e6e9ef;--dim:#8b93a3;
---acc:#6ea8fe;--good:#6fcf97}
+--acc:#6ea8fe;--good:#6fcf97;
+--kb:0px;            /* height the OS keyboard covers (set by visualViewport) */
+--composer-h:190px}  /* measured height of the fixed composer */
 *{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);
 font:16px/1.6 "Noto Sans Myanmar","Myanmar MN","Pyidaungsu",ui-sans-serif,system-ui,sans-serif;
-display:flex;justify-content:center;min-height:100vh}
-.app{width:100%;max-width:560px;padding:18px 14px 40px;display:flex;
-flex-direction:column;gap:12px}
+min-height:100vh;min-height:100dvh;
+overscroll-behavior-y:none;      /* no pull-to-refresh / rubber-band while typing */
+touch-action:manipulation;       /* kills the 300ms double-tap-zoom delay */
+-webkit-tap-highlight-color:transparent}
+.app{width:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;
+min-height:100vh;min-height:100dvh}
+
+/* ---- scrolling page content (everything except the composer) ---- */
+.content{flex:1 1 auto;display:flex;flex-direction:column;gap:12px;
+padding:16px max(14px,env(safe-area-inset-right)) 0 max(14px,env(safe-area-inset-left));
+padding-bottom:calc(var(--composer-h) + var(--kb) + 20px)}
+
+/* ---- composer: candidate bar + input + actions, pinned above the keyboard ---- */
+.composer{position:fixed;left:0;right:0;bottom:0;z-index:20;
+width:100%;max-width:560px;margin:0 auto;
+background:rgba(15,17,21,.94);
+-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+border-top:1px solid var(--ln);
+padding:7px max(14px,env(safe-area-inset-right))
+calc(7px + max(6px,env(safe-area-inset-bottom))) max(14px,env(safe-area-inset-left));
+display:flex;flex-direction:column;gap:8px;
+transform:translateY(calc(-1 * var(--kb)));
+transition:transform .14s ease-out}
+@media(prefers-reduced-motion:reduce){.composer{transition:none}}
+
 h1{font-size:20px;margin:0}
 .sub{color:var(--dim);font-size:13px;margin:0}
 .msg{background:var(--pan);border:1px solid var(--ln);border-radius:14px;
-min-height:110px;padding:12px 14px;font-size:20px;line-height:2;word-break:break-word}
+min-height:110px;padding:12px 14px;font-size:20px;line-height:2;word-break:break-word;
+-webkit-user-select:text;user-select:text}
 .msg .rom{display:block;font-size:11px;color:#7ea7d8;
 font-family:ui-monospace,Menlo,monospace;margin-top:6px;word-break:break-all}
 .msg:empty::before{content:"သင့်စာသား ဒီမှာပေါ်မယ် · your message appears here";
 color:#454d5c;font-size:14px}
-.bar{display:flex;gap:7px;overflow-x:auto;min-height:66px;padding:2px}
+
+/* ---- candidate bar: horizontal, momentum, never leaks its scroll to the page ---- */
+.bar{display:flex;gap:7px;align-items:stretch;min-height:62px;padding:1px 0;
+overflow-x:auto;overflow-y:hidden;
+overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
+scroll-snap-type:x proximity;scrollbar-width:none}
+.bar::-webkit-scrollbar{display:none}
 .cd{flex:0 0 auto;background:var(--pan);border:1px solid var(--ln);
-border-radius:11px;padding:6px 13px;text-align:center;cursor:pointer;
--webkit-tap-highlight-color:transparent}
-.cd:active{background:var(--acc)}
-.cd .lo{font-size:19px;display:block;line-height:1.8}
+border-radius:12px;padding:6px 14px;text-align:center;cursor:pointer;
+min-height:56px;min-width:62px;             /* comfortable thumb target */
+display:flex;flex-direction:column;align-items:center;justify-content:center;
+scroll-snap-align:start;touch-action:manipulation;
+-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+-webkit-tap-highlight-color:transparent;
+transition:transform .07s ease-out,background .07s ease-out}
+@media(prefers-reduced-motion:reduce){.cd{transition:none}}
+.cd:active{background:var(--acc);border-color:var(--acc);transform:scale(.95)}
+.cd:active .lo,.cd:active .rm{color:#08101c}
+.cd:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+@media(hover:hover){.cd:hover{border-color:#39445a}}
+.cd .lo{font-size:19px;display:block;line-height:1.6}
 .cd .rm{font-size:10px;color:var(--dim);display:block;
 font-family:ui-monospace,Menlo,monospace}
 .cd.raw .lo{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--dim)}
 .hint{color:#454d5c;font-size:13px;align-self:center;padding-left:4px}
+
 input[type=text]{width:100%;background:var(--pan);border:1px solid var(--acc);
 border-radius:12px;color:var(--acc);font:18px ui-monospace,Menlo,monospace;
-padding:13px 14px;outline:none}
+padding:14px;min-height:54px;outline:none;-webkit-appearance:none;appearance:none}
 input::placeholder{color:#3d4757;font-family:inherit}
 .row{display:flex;gap:8px}
 button{flex:1;background:var(--pan);border:1px solid var(--ln);color:var(--ink);
-border-radius:11px;padding:11px;font-size:14px;cursor:pointer;font-family:inherit}
+border-radius:11px;padding:12px 8px;font-size:14px;cursor:pointer;font-family:inherit;
+min-height:48px;touch-action:manipulation;
+-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 button:active{background:var(--ln)}
+button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 button.pri{background:var(--acc);color:#08101c;border-color:var(--acc);font-weight:600}
 .stats{font-size:11.5px;color:var(--dim);font-family:ui-monospace,Menlo,monospace}
 .fb{background:var(--pan);border:1px solid var(--ln);border-radius:14px;
 padding:13px 14px;display:flex;flex-direction:column;gap:9px}
 .fb h2{font-size:14px;margin:0}
 .fb textarea{background:#12151b;border:1px solid var(--ln);border-radius:9px;
-color:var(--ink);font:14px inherit;padding:9px;min-height:52px;resize:vertical}
-.fb .thumbs{display:flex;gap:8px}
-.fb .thumbs button{font-size:19px;flex:0 0 auto;padding:7px 18px}
+color:var(--ink);font:16px inherit;padding:10px;min-height:56px;resize:vertical;
+-webkit-appearance:none;appearance:none}
+.fb .thumbs{display:flex;gap:8px;flex-wrap:wrap}
+.fb .thumbs button{font-size:19px;flex:0 0 auto;padding:9px 20px;min-width:64px}
 .fb .thumbs button.on{background:var(--acc);border-color:var(--acc)}
-label{font-size:12px;color:var(--dim);display:flex;gap:7px;align-items:flex-start;
-cursor:pointer;user-select:none;line-height:1.5}
+label{font-size:12.5px;color:var(--dim);display:flex;gap:9px;align-items:flex-start;
+cursor:pointer;-webkit-user-select:none;user-select:none;line-height:1.5;
+padding:4px 0;min-height:32px}
+label input[type=checkbox]{width:20px;height:20px;flex:0 0 auto;margin:1px 0 0;
+accent-color:var(--acc)}
 .foot{color:var(--dim);font-size:12.5px;line-height:1.7;border-top:1px solid var(--ln);
-padding-top:12px}
+padding-top:12px;padding-bottom:6px}
 .foot b{color:var(--ink)}
 a{color:var(--acc)}
 </style></head><body>
@@ -58,20 +107,13 @@ a{color:var(--acc)}
   <input name="site"><input name="event"><textarea name="comment"></textarea>
   <textarea name="payload"></textarea><input name="bot-field">
 </form><div class="app">
+<div class="content" id="content">
 <h1>မြန်မာစာရိုက် <span style="color:var(--dim);font-weight:400;font-size:14px">
 type Burmese with English letters</span></h1>
 <p class="sub">Burglish ရိုက်နေကျအတိုင်း ရိုက်ပါ — အသံထွက်အတိုင်း — မှန်တဲ့စာလုံးကို နှိပ်ပါ
 · type Burglish the way it sounds, tap the right word, get real Burmese</p>
 
 <div class="msg" id="msg"></div>
-<div class="bar" id="bar"><span class="hint">စရိုက်ပါ — try: nay kaung la</span></div>
-<input type="text" id="inp" autocomplete="off" autocorrect="off"
- autocapitalize="none" spellcheck="false" placeholder="ဒီမှာရိုက်ပါ · type here (a-z)">
-<div class="row">
- <button onclick="undo()">↩ ပြန်ဖျက် · undo</button>
- <button onclick="clearAll()">✕ ရှင်း · clear</button>
- <button class="pri" onclick="copyMsg()" id="cpy">⧉ ကူးယူ · copy</button>
-</div>
 <div class="stats" id="stats"></div>
 <label><input type="checkbox" id="showrom">show Burglish under words</label>
 
@@ -108,6 +150,18 @@ donated typing, shown to you first.<br><br>
 lexicon from <a href="https://github.com/ye-kyaw-thu/myG2P">myG2P</a> and
 <a href="https://github.com/ye-kyaw-thu/myPOS">myPOS</a> (Ye Kyaw Thu et al.,
 CC BY-NC-SA 4.0 — this tool is free and noncommercial)
+</div>
+</div>
+<div class="composer" id="composer">
+ <div class="bar" id="bar"><span class="hint">စရိုက်ပါ — try: nay kaung la</span></div>
+ <input type="text" id="inp" autocomplete="off" autocorrect="off"
+  autocapitalize="none" spellcheck="false" inputmode="text" enterkeyhint="next"
+  placeholder="ဒီမှာရိုက်ပါ · type here (a-z)">
+ <div class="row">
+  <button onclick="undo()">↩ ပြန်ဖျက် · undo</button>
+  <button onclick="clearAll()">✕ ရှင်း · clear</button>
+  <button class="pri" onclick="copyMsg()" id="cpy">⧉ ကူးယူ · copy</button>
+ </div>
 </div>
 </div>
 <script>
@@ -244,15 +298,28 @@ function render(){
   cs.forEach((i,pos)=>{
     const d=document.createElement("div");d.className="cd";
     d.innerHTML='<span class="lo">'+LO[i]+'</span><span class="rm">'+KK[i]+'</span>';
-    d.onclick=()=>commit(i,null,pos,txt.length===0);
+    chip(d,()=>commit(i,null,pos,txt.length===0),LO[i]+" — "+KK[i]);
     bar.appendChild(d);
   });
   if(txt){
     const d=document.createElement("div");d.className="cd raw";
     d.innerHTML='<span class="lo">'+txt+'</span><span class="rm">ရိုက်သည့်အတိုင်း · as typed</span>';
-    d.onclick=()=>commit(null,txt,-1,false);
+    chip(d,()=>commit(null,txt,-1,false),txt+" — as typed");
     bar.appendChild(d);
   }
+  bar.scrollLeft=0;
+}
+/* A candidate behaves like a native suggestion strip: tapping it must never
+   dismiss or flicker the OS keyboard, and it must be reachable by keyboard. */
+function chip(d,act,label){
+  d.setAttribute("role","button");d.tabIndex=0;d.setAttribute("aria-label",label);
+  /* Only mouse needs blur suppression — a tap on a non-focusable div does not
+     move focus, so touch is left alone and slide-off-to-cancel still works. */
+  d.addEventListener("pointerdown",e=>{if(e.pointerType==="mouse")e.preventDefault()});
+  d.addEventListener("click",act);
+  d.addEventListener("keydown",e=>{
+    if(e.key==="Enter"||e.key===" "){e.preventDefault();act()}
+  });
 }
 function commit(i,raw,pos,zeroKey){
   const t0=$("inp").value.trim().toLowerCase().replace(/[^a-z]/g,"");
@@ -278,7 +345,7 @@ function commit(i,raw,pos,zeroKey){
     words.push({my:raw,rom:"",raw:true});
     prev=null;
   }
-  $("inp").value="";drawMsg();render();drawStats();$("inp").focus();
+  $("inp").value="";drawMsg();render();drawStats();$("inp").focus({preventScroll:true});
 }
 function drawMsg(){
   const m=$("msg");
@@ -320,6 +387,30 @@ $("donate").addEventListener("change",()=>{
       (M.donated.length>40?" …":"");
   }else{p.style.display="none"}
 });
+/* ---- mobile: keep the composer sitting on top of the OS keyboard ----
+   iOS Safari does not shrink the layout viewport when the keyboard opens, so a
+   bottom-fixed bar would hide behind it. visualViewport gives the covered
+   height; Android (interactive-widget=resizes-content) reports ~0 because the
+   layout viewport already shrank, so the same formula works on both. */
+(function(){
+  const comp=document.getElementById("composer"),root=document.documentElement;
+  const vv=window.visualViewport;
+  function measure(){root.style.setProperty("--composer-h",comp.offsetHeight+"px")}
+  function keyboard(){
+    if(!vv)return;
+    const covered=Math.max(0,window.innerHeight-(vv.height+vv.offsetTop));
+    root.style.setProperty("--kb",covered+"px");
+  }
+  function sync(){measure();keyboard()}
+  if(vv){vv.addEventListener("resize",sync);vv.addEventListener("scroll",keyboard)}
+  addEventListener("orientationchange",()=>setTimeout(sync,260));
+  addEventListener("resize",sync);
+  if(window.ResizeObserver)new ResizeObserver(measure).observe(comp);
+  sync();
+})();
+/* Action buttons must not steal focus from the input on desktop either. */
+document.querySelectorAll(".row button").forEach(b=>
+  b.addEventListener("pointerdown",e=>{if(e.pointerType==="mouse")e.preventDefault()}));
 render();
 </script></body></html>'''
 open("try-burmese.html","w").write(html.replace("__DATA__", data))

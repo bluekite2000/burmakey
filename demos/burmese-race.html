@@ -1,22 +1,31 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Typing race — Bagan-style vs Draft 4 (Burmese)</title><style>
 :root{--bg:#0f1115;--pan:#171a21;--ln:#252a34;--ink:#e6e9ef;--dim:#8b93a3;
 --acc:#6ea8fe;--good:#6fcf97;--key:#232833;--flash:#6ea8fe}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
 font:15px/1.5 ui-sans-serif,system-ui,sans-serif;display:flex;
-flex-direction:column;align-items:center;padding:20px 12px 50px}
+flex-direction:column;align-items:center;overflow-x:hidden;
+touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+padding:20px max(12px,env(safe-area-inset-right))
+calc(50px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
 .mm{font-family:"Noto Sans Myanmar","Myanmar MN","Pyidaungsu",sans-serif}
 h1{font-size:19px;margin:0 0 2px}
 .sub{color:var(--dim);font-size:13px;margin:0 0 14px;text-align:center;max-width:660px}
 .ctrl{display:flex;gap:8px;margin-bottom:16px}
 button{background:var(--key);border:1px solid var(--ln);color:var(--ink);
-border-radius:8px;padding:7px 16px;font-size:14px;cursor:pointer}
+border-radius:8px;padding:11px 18px;font-size:14px;cursor:pointer;
+min-height:44px;touch-action:manipulation;font-family:inherit;
+-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 button.primary{background:var(--acc);color:#08101c;border-color:var(--acc);font-weight:600}
 .stage{display:grid;grid-template-columns:1fr 1fr;gap:18px;width:100%;max-width:900px}
 @media(max-width:700px){.stage{grid-template-columns:1fr}}
 .phone{background:var(--pan);border:1px solid var(--ln);border-radius:18px;
 overflow:hidden;display:flex;flex-direction:column;height:600px}
+@media(max-width:700px){.phone{height:clamp(400px,62vh,600px)}}
 .title{padding:9px 14px;border-bottom:1px solid var(--ln);font-size:13px;
 font-weight:600;display:flex;justify-content:space-between;align-items:center}
 .title .tag{font-size:11px;color:var(--dim);font-weight:400}
@@ -30,8 +39,14 @@ font-size:15px;display:flex;align-items:center}
 .caret{display:inline-block;width:1.5px;height:15px;background:var(--acc);
 margin-left:1px;animation:bl .9s steps(1) infinite}
 @keyframes bl{50%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.caret{animation:none}
+.kk,.cd{transition:none}}
 .bar{display:flex;gap:5px;padding:6px 8px;border-top:1px solid var(--ln);
-background:#141821;min-height:50px;align-items:center;overflow:hidden}
+background:#141821;min-height:50px;align-items:center;
+overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
+overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.bar::-webkit-scrollbar{display:none}
+.cd{flex:0 0 auto}
 .cd{background:var(--key);border:1px solid var(--ln);border-radius:8px;
 padding:3px 9px;text-align:center;min-width:50px;transition:all .12s}
 .cd .lo{font-size:15px;display:block;line-height:1.7}

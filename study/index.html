@@ -1,0 +1,648 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BurmaKey — the study: Burglish input vs Burmese script keyboards</title>
+<meta name="description" content="Measured on 19,898 real held-out Burmese tokens: a learning ranker over Burglish input cuts typing by half versus script keyboards, and removes Burglish ambiguity entirely.">
+<style>
+:root{
+  color-scheme:dark;
+  /* page */
+  --bg:#0b0d11; --pan:#171a21; --ln:#252a34; --ink:#e6e9ef; --dim:#8b93a3;
+  --acc:#6ea8fe;
+  /* chart ink — charts sit on --pan */
+  --text-primary:#e6e9ef; --text-secondary:#b9c0cc; --muted:#8b93a3;
+  --grid:#242936; --baseline:#333a49;
+  /* categorical slots — validated for this dark surface:
+     adjacent CVD dE 9.4, normal-vision 26.5, all >=3:1 contrast */
+  --series-1:#3987e5;  /* BurmaKey */
+  --series-2:#d95926;  /* Bagan as used */
+  --series-3:#199e70;  /* Bagan + ideal engine */
+  --deemph:#59606e;    /* emphasis charts: everything that is not the point */
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif;
+  padding:0 0 max(48px,env(safe-area-inset-bottom));
+  overflow-x:hidden}
+.wrap{max-width:760px;margin:0 auto;
+  padding-left:max(18px,env(safe-area-inset-left));
+  padding-right:max(18px,env(safe-area-inset-right))}
+a{color:var(--acc)}
+.mm{font-family:"Noto Sans Myanmar","Myanmar MN","Pyidaungsu",sans-serif}
+
+/* ---------- masthead ---------- */
+header{padding:38px 0 8px}
+.crumb{font-size:13px;color:var(--dim);margin:0 0 14px}
+h1{font-size:clamp(25px,5.4vw,36px);line-height:1.22;letter-spacing:-.02em;margin:0 0 12px}
+.lede{color:var(--text-secondary);font-size:17px;margin:0 0 18px}
+.meta{font-size:13px;color:var(--dim);border-left:2px solid var(--ln);
+  padding:2px 0 2px 12px;margin:0 0 8px}
+
+/* ---------- hero figure (exactly one) ---------- */
+.hero{background:var(--pan);border:1px solid var(--ln);border-radius:16px;
+  padding:22px 20px;margin:26px 0 8px}
+.hero .n{font-size:clamp(44px,11vw,60px);font-weight:600;line-height:1;
+  letter-spacing:-.03em;color:var(--acc);display:block}
+.hero .cap{color:var(--text-secondary);font-size:14.5px;margin-top:10px;display:block}
+
+/* ---------- stat tiles ---------- */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(146px,1fr));
+  gap:10px;margin:18px 0 8px}
+.tile{background:var(--pan);border:1px solid var(--ln);border-radius:13px;padding:14px}
+.tile b{display:block;font-size:26px;font-weight:600;letter-spacing:-.02em;line-height:1.2}
+.tile span{display:block;font-size:12.5px;color:var(--dim);margin-top:5px;line-height:1.45}
+
+h2{font-size:20px;margin:44px 0 6px;letter-spacing:-.01em}
+.sub{color:var(--dim);font-size:14px;margin:0 0 10px}
+p{color:#ccd3dd;margin:0 0 14px}
+ul{color:#ccd3dd;margin:0 0 14px;padding-left:20px}
+li{margin-bottom:7px}
+code{font-family:ui-monospace,Menlo,monospace;font-size:.88em;
+  background:#12151b;border:1px solid var(--ln);border-radius:5px;padding:1px 5px}
+
+/* ---------- chart ----------
+   Geometry: every row is [label | bar-measure | value-gutter].
+   The bar's width % resolves against .bmeasure alone, and the gridlines and
+   x-axis are inset by exactly the same amounts, so ticks line up with bars. */
+.chart{--lab:170px;--gut:52px;--gap:12px;
+  /* the bar column's exact left/right insets — gridlines and the x-axis
+     use these too, so ticks always land on the bar scale */
+  --plot-l:calc(var(--lab) + var(--gap));
+  --plot-r:calc(var(--gut) + var(--gap));
+  margin:20px 0 8px;background:var(--pan);border:1px solid var(--ln);
+  border-radius:16px;padding:18px 16px 14px}
+.chart figcaption{margin:0 0 2px;font-size:15px;font-weight:600;color:var(--text-primary)}
+.chart .csub{font-size:13px;color:var(--dim);margin:0 0 16px;line-height:1.5}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:0 0 16px;
+  font-size:12.5px;color:var(--text-secondary)}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;
+  background:var(--c);margin-right:7px;vertical-align:-1px}
+/* sits above the gridlines and masks them, so a hairline never runs
+   through the group label */
+.gtitle{font-size:11.5px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.07em;margin:18px 0 7px;position:relative;z-index:2;
+  display:inline-block;background:var(--pan);padding-right:10px}
+.group:first-of-type .gtitle{margin-top:0}
+
+.plot{position:relative}
+/* hairline solid gridlines, recessive, behind the marks */
+.gridlines{position:absolute;top:0;bottom:0;
+  left:var(--plot-l);right:var(--plot-r);
+  display:flex;justify-content:space-between;pointer-events:none;z-index:0}
+.gridlines i{width:1px;background:var(--grid)}
+.gridlines i:first-child{background:var(--baseline)}
+.xaxis{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);
+  font-variant-numeric:tabular-nums;margin:7px 0 0;
+  margin-left:var(--plot-l);margin-right:var(--plot-r)}
+.xaxis span{transform:translateX(-50%)}
+.xaxis span:first-child{transform:none}
+.xaxis span:last-child{transform:translateX(50%)}
+.xunit{font-size:11px;color:var(--muted);margin-top:3px;
+  margin-left:var(--plot-l)}
+
+.brow{position:relative;z-index:1;display:grid;
+  grid-template-columns:var(--lab) minmax(0,1fr) var(--gut);
+  align-items:center;gap:var(--gap);padding:5px 0;border-radius:8px;outline:none}
+.brow:hover,.brow:focus-visible{background:rgba(110,168,254,.07)}
+.brow:focus-visible{box-shadow:0 0 0 2px var(--acc)}
+.blab{font-size:13px;color:var(--text-secondary);line-height:1.35;min-width:0}
+.blab em{font-style:normal;color:var(--muted);font-size:11.5px;display:block}
+.bmeasure{min-width:0}
+/* mark: 20px thick (<=24), square at the baseline, 4px rounded data-end */
+.bfill{display:block;height:20px;background:var(--c,var(--deemph));
+  border-radius:0 4px 4px 0;min-width:2px}
+.bval{font-size:13px;font-weight:600;color:var(--text-primary);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+/* 2px surface gap between adjacent bars within a group */
+.group .brow+.brow{margin-top:2px}
+
+/* tooltip — enhances; every value is also direct-labelled and in the table */
+.tip{position:absolute;left:0;bottom:calc(100% - 4px);z-index:5;
+  background:#0c0f14;border:1px solid var(--ln);border-radius:9px;
+  padding:8px 11px;font-size:12.5px;color:var(--text-secondary);
+  box-shadow:0 8px 22px rgba(0,0,0,.55);max-width:min(330px,84vw);
+  opacity:0;visibility:hidden;transition:opacity .12s;pointer-events:none;line-height:1.45}
+.tip b{color:var(--text-primary)}
+.brow:hover .tip,.brow:focus-visible .tip{opacity:1;visibility:visible}
+
+/* table twin */
+details.tbl{margin-top:14px;border-top:1px solid var(--ln);padding-top:6px}
+details.tbl summary{font-size:12.5px;color:var(--dim);cursor:pointer;
+  list-style:none;padding:6px 0;min-height:36px;display:flex;align-items:center;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation}
+details.tbl summary::-webkit-details-marker{display:none}
+details.tbl summary::before{content:"▸";margin-right:8px}
+details.tbl[open] summary::before{content:"▾"}
+.scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+table{border-collapse:collapse;font-size:13.5px;width:100%;min-width:330px}
+th,td{text-align:right;padding:8px 10px;border-bottom:1px solid var(--ln);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+th:first-child,td:first-child{text-align:left;color:var(--text-secondary);
+  white-space:normal;min-width:148px}
+th{color:var(--muted);font-weight:500;font-size:12px}
+
+.callout{background:var(--pan);border:1px solid var(--ln);border-left:3px solid var(--acc);
+  border-radius:0 13px 13px 0;padding:14px 16px;margin:20px 0}
+.callout p:last-child{margin-bottom:0}
+.cta{display:inline-block;background:var(--acc);color:#08101c;font-weight:700;
+  padding:14px 26px;border-radius:13px;margin:6px 8px 8px 0;text-decoration:none;
+  min-height:48px;line-height:22px;-webkit-tap-highlight-color:transparent;
+  touch-action:manipulation}
+.cta.ghost{background:transparent;border:1px solid var(--ln);color:var(--ink);font-weight:500}
+footer{margin:52px 0 0;padding-top:16px;border-top:1px solid var(--ln);
+  font-size:13px;color:var(--dim);line-height:1.75}
+
+/* ---------- narrow screens: label rides above its bar ---------- */
+@media(max-width:600px){
+  .chart{--lab:0px;--gap:10px;padding:16px 13px 12px;
+    --plot-l:0px;--plot-r:calc(var(--gut) + var(--gap))}
+  .brow{grid-template-columns:minmax(0,1fr) var(--gut);
+    grid-template-areas:"lab lab" "bar val";row-gap:3px;column-gap:10px;padding:8px 0}
+  .blab{grid-area:lab;font-size:13.5px}
+  .blab em{display:inline;margin-left:7px}
+  .bmeasure{grid-area:bar}
+  .bval{grid-area:val;text-align:right}
+  .xunit{margin-left:0}
+  .tip{max-width:86vw}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+<div class="wrap">
+
+<header>
+<p class="crumb"><a href="../">← BurmaKey</a></p>
+<h1>Type Burglish, get Burmese script — at half the taps</h1>
+<p class="lede">A learning ranker turns the toneless Latin that Myanmar
+already types in chat into canonical Burmese Unicode. Measured on 19,898
+held-out tokens of real text, it cuts typing effort roughly in half and
+removes Burglish&rsquo;s ambiguity entirely.</p>
+<p class="meta">Simulation on real corpus data. No user trials, no
+native-speaker review yet. Data: myG2P v2 and myPOS v3 (Ye Kyaw Thu et al.,
+CC BY-NC-SA 4.0 — noncommercial).</p>
+</header>
+
+<div class="hero">
+  <span class="n">−50.2%</span>
+  <span class="cap">fewer taps per word than typing Burmese script
+  character-by-character — while sending unambiguous Unicode instead of
+  guessable Burglish.</span>
+</div>
+
+<h2>The problem</h2>
+<p>Young Myanmar people type <b>Burglish</b> — Burmese in improvised English
+letters, no tones, no vowel length. It is marginally faster than hunting
+through a script layout, which is exactly why it spread. But it is lossy:
+across real running text, <b>67.7% of Burglish words are spelled identically
+to at least one other Burmese word</b>. <code>taja</code> can be any of seven
+words; <code>akyi</code> seven; <code>acha</code> six. The reader guesses.</p>
+
+<p>Meanwhile the decade-long Zawgyi/Unicode split left Burmese text that looks
+fine but sorts, searches and travels badly. A lexicon-driven input method
+emits canonical Unicode by construction, so it fixes both problems at once.</p>
+
+<div class="tiles">
+  <div class="tile"><b>67.7%</b><span>of Burglish words in real text collide
+  with another word</span></div>
+  <div class="tile"><b>0%</b><span>ambiguity once the engine picks the word and
+  emits script</span></div>
+  <div class="tile"><b>87.3%</b><span>of real running tokens the romanizer
+  covers</span></div>
+  <div class="tile"><b>19,898</b><span>held-out tokens scored, never seen in
+  training</span></div>
+</div>
+
+<h2>Headline result</h2>
+<p class="sub">Every system typing the same 19,898 held-out tokens.</p>
+
+<figure class="chart">
+<figcaption>Typing effort — taps per word</figcaption>
+<p class="csub">Lower is better. The bottom two rows are this project; the top
+two are what people use today.</p>
+<div class="plot">
+  <div class="gridlines" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+  <div class="brow" tabindex="0">
+    <span class="blab">Burmese script, key-per-character
+      <em>today&rsquo;s keyboards · unambiguous</em></span>
+    <span class="bmeasure"><span class="bfill" style="width:86.3%"></span></span>
+    <span class="bval">5.18</span>
+    <span class="tip"><b>5.18 taps/word</b> — one key per codepoint on a layout
+    keyboard. Unambiguous for the reader, but the most work to type.</span>
+  </div>
+
+  <div class="brow" tabindex="0">
+    <span class="blab">Burglish typed out
+      <em>today&rsquo;s chat · 67.7% ambiguous</em></span>
+    <span class="bmeasure"><span class="bfill" style="width:81.7%"></span></span>
+    <span class="bval">4.90</span>
+    <span class="tip"><b>4.90 taps/word</b> — slightly less work than the
+    script, which is why it is popular, but 67.7% of words reach the reader
+    ambiguous.</span>
+  </div>
+
+  <div class="brow" tabindex="0">
+    <span class="blab">BurmaKey engine, cold start
+      <em>no prior · unambiguous</em></span>
+    <span class="bmeasure"><span class="bfill"
+      style="width:44.7%;--c:var(--series-1);opacity:.6"></span></span>
+    <span class="bval">2.68</span>
+    <span class="tip"><b>2.68 taps/word</b> — the engine with an empty memory,
+    learning only from what you type during the session.</span>
+  </div>
+
+  <div class="brow" tabindex="0">
+    <span class="blab">BurmaKey engine, corpus-pretrained
+      <em>ships the prior · unambiguous</em></span>
+    <span class="bmeasure"><span class="bfill"
+      style="width:43.0%;--c:var(--series-1)"></span></span>
+    <span class="bval">2.58</span>
+    <span class="tip"><b>2.58 taps/word</b> — best result. −50.2% against
+    script typing, −47.4% against Burglish, with zero receiver ambiguity.</span>
+  </div>
+</div>
+<div class="xaxis" aria-hidden="true"><span>0</span><span>2</span><span>4</span><span>6</span></div>
+<div class="xunit">taps per word</div>
+
+<details class="tbl"><summary>Table view</summary><div class="scroll-x">
+<table>
+<thead><tr><th>System</th><th>Taps/word</th><th>Receiver ambiguity</th></tr></thead>
+<tbody>
+<tr><td>Burmese script, key-per-character</td><td>5.18</td><td>0%</td></tr>
+<tr><td>Burglish typed out</td><td>4.90</td><td>67.7%</td></tr>
+<tr><td>BurmaKey engine, cold start</td><td>2.68</td><td>0%</td></tr>
+<tr><td>BurmaKey engine, corpus-pretrained</td><td>2.58</td><td>0%</td></tr>
+</tbody></table></div></details>
+</figure>
+
+<ul>
+<li><b>−50.2%</b> taps against script typing, <b>−47.4%</b> against Burglish —
+while ambiguity goes to zero.</li>
+<li>Corpus pretraining <b>helped</b> here (+0.10 taps saved, zero-key
+prediction 14.7% → 17.9%) because training and test share register.
+Pretraining is not good or bad in itself; <i>mismatched</i> register is what
+hurts.</li>
+<li>A 5-candidate shortlist beats 3 (2.58 vs 2.84 taps/word).</li>
+<li>Only <b>1.2%</b> of in-lexicon tokens had to be typed out in full.</li>
+<li>Hard floor: an unrecognised word — a name, slang — is sent exactly as
+typed, so the keyboard can never be worse than the status quo.</li>
+</ul>
+
+<h2>Head-to-head against the keyboards people actually use</h2>
+<p class="sub">Bagan is the market leader, 10M+ downloads; TTKeyboard and
+Gboard Myanmar work the same way.</p>
+<p>The fair comparison is not &ldquo;our engine versus their keyboard.&rdquo;
+So both sides were given the <b>identical</b> engine — frequency + recency +
+bigram, corpus-pretrained, 5-candidate bar — and only the input code was
+allowed to differ. Streams are held-out real sentences: chat (≤8 words, 800
+messages) and essay (≥15 words, 200 sentences), about 4.7k words each.</p>
+
+<p>Counting taps, the answer looks emphatic. But a tap is not a tap on a
+phone, so we re-ran the whole comparison on a modelled handset.</p>
+
+<figure class="chart">
+<figcaption>First pass — taps per word</figcaption>
+<p class="csub">Lower is better. This is the comparison as originally run:
+every tap counted the same.</p>
+
+<div class="legend">
+  <span style="--c:var(--series-2)"><i></i>Bagan as actually used</span>
+  <span style="--c:var(--series-3)"><i></i>Bagan + our engine (does not exist)</span>
+  <span style="--c:var(--series-1)"><i></i>BurmaKey (Burglish in, script out)</span>
+</div>
+
+<div class="plot">
+  <div class="gridlines" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+  <div class="group">
+  <p class="gtitle">Chat — messages of 8 words or fewer</p>
+    <div class="brow" tabindex="0">
+      <span class="blab">Bagan as actually used</span>
+      <span class="bmeasure"><span class="bfill"
+        style="width:85.0%;--c:var(--series-2)"></span></span>
+      <span class="bval">5.10</span>
+      <span class="tip"><b>5.10 taps/word</b> — every glyph typed, plus a
+      layer switch for the rarer ones.</span>
+    </div>
+    <div class="brow" tabindex="0">
+      <span class="blab">Bagan + our engine</span>
+      <span class="bmeasure"><span class="bfill"
+        style="width:38.8%;--c:var(--series-3)"></span></span>
+      <span class="bval">2.33</span>
+      <span class="tip"><b>2.33 taps/word</b> — script keys carrying this
+      project&rsquo;s exact engine. Fewer taps than BurmaKey: a script
+      character narrows the candidate list faster than a Latin letter.</span>
+    </div>
+    <div class="brow" tabindex="0">
+      <span class="blab">BurmaKey</span>
+      <span class="bmeasure"><span class="bfill"
+        style="width:40.8%;--c:var(--series-1)"></span></span>
+      <span class="bval">2.45</span>
+      <span class="tip"><b>2.45 taps/word</b> — half the taps of Bagan as it
+      exists.</span>
+    </div>
+  </div>
+
+  <div class="group">
+  <p class="gtitle">Essay — sentences of 15 words or more</p>
+    <div class="brow" tabindex="0">
+      <span class="blab">Bagan as actually used</span>
+      <span class="bmeasure"><span class="bfill"
+        style="width:88.3%;--c:var(--series-2)"></span></span>
+      <span class="bval">5.30</span>
+      <span class="tip"><b>5.30 taps/word</b> — longer sentences, same
+      character-by-character entry.</span>
+    </div>
+    <div class="brow" tabindex="0">
+      <span class="blab">Bagan + our engine</span>
+      <span class="bmeasure"><span class="bfill"
+        style="width:41.8%;--c:var(--series-3)"></span></span>
+      <span class="bval">2.51</span>
+      <span class="tip"><b>2.51 taps/word</b> — the hypothetical again.</span>
+    </div>
+    <div class="brow" tabindex="0">
+      <span class="blab">BurmaKey</span>
+      <span class="bmeasure"><span class="bfill"
+        style="width:44.5%;--c:var(--series-1)"></span></span>
+      <span class="bval">2.67</span>
+      <span class="tip"><b>2.67 taps/word</b> — still half of Bagan as it
+      exists.</span>
+    </div>
+  </div>
+</div>
+<div class="xaxis" aria-hidden="true"><span>0</span><span>2</span><span>4</span><span>6</span></div>
+<div class="xunit">taps per word</div>
+
+<details class="tbl"><summary>Table view</summary><div class="scroll-x">
+<table>
+<thead><tr><th>System</th><th>Chat</th><th>Essay</th></tr></thead>
+<tbody>
+<tr><td>Bagan as actually used</td><td>5.10</td><td>5.30</td></tr>
+<tr><td>Bagan + our engine (does not exist)</td><td>2.33</td><td>2.51</td></tr>
+<tr><td>BurmaKey (Burglish in, script out)</td><td>2.45</td><td>2.67</td></tr>
+</tbody></table></div></details>
+</figure>
+
+<h2>Second pass — the same test on a phone</h2>
+<p>Counting taps hides four things that matter on a handset, and they do not
+all point the same way:</p>
+<ul>
+<li>A Myanmar script layout packs about <b>11 columns</b> into the same glass
+that a Latin layout gives <b>10</b>, so its keys are smaller — slower to hit
+and missed more often, by Fitts&rsquo;s law. <i>Favours BurmaKey.</i></li>
+<li>Glyphs that do not fit the base layer sit behind a <b>layer switch</b>
+costing an extra tap. In practice this barely matters: a 40-key base layer
+already covers <b>99.5%</b> of real keystrokes. <i>Nearly neutral.</i></li>
+<li>A <b>candidate-bar pick is one tap but not one key press</b> — it adds a
+visual scan that grows with the candidate&rsquo;s position, plus a long reach
+up to the strip. Both engine systems pay this on most words.
+<i>Favours neither, penalises the tap-count framing.</i></li>
+<li><b>Script characters carry more information per tap</b>, so the script
+system reaches the right candidate in fewer keystrokes (2.33 vs 2.45).
+<i>Favours the script keyboard.</i></li>
+</ul>
+<p>So the second pass costs every system in <b>seconds per word</b>: each key
+press timed by Fitts&rsquo;s law from the layout&rsquo;s real key size and the
+actual key-to-key travel of the typed sequence, each candidate pick timed as a
+reach plus a position-dependent scan, and each mis-tap charged a notice,
+backspace and retap.</p>
+
+<figure class="chart">
+<figcaption>Seconds per word on a modelled phone</figcaption>
+<p class="csub">Lower is better. 360pt portrait handset; centre-of-range
+constants. The ordering below is stable across all 81 combinations of the
+sensitivity sweep — see the caveat that follows.</p>
+
+<div class="legend">
+  <span style="--c:var(--series-2)"><i></i>Bagan as actually used</span>
+  <span style="--c:var(--series-3)"><i></i>Bagan + our engine (does not exist)</span>
+  <span style="--c:var(--series-1)"><i></i>BurmaKey (Burglish in, script out)</span>
+</div>
+
+<div class="plot">
+  <div class="gridlines" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+  <div class="group">
+  <p class="gtitle">Chat — messages of 8 words or fewer</p>
+    <div class="brow" tabindex="0">
+      <span class="blab">Bagan as actually used <em>27 wpm</em></span>
+      <span class="bmeasure"><span class="bfill"
+        style="width:88.7%;--c:var(--series-2)"></span></span>
+      <span class="bval">2.22</span>
+      <span class="tip"><b>2.22 s/word · 27 wpm</b> — small keys, every glyph
+      typed, no useful prediction.</span>
+    </div>
+    <div class="brow" tabindex="0">
+      <span class="blab">Bagan + our engine <em>46 wpm</em></span>
+      <span class="bmeasure"><span class="bfill"
+        style="width:51.9%;--c:var(--series-3)"></span></span>
+      <span class="bval">1.30</span>
+      <span class="tip"><b>1.30 s/word · 46 wpm</b> — the fastest system
+      modelled, and it does not exist.</span>
+    </div>
+    <div class="brow" tabindex="0">
+      <span class="blab">BurmaKey <em>44 wpm</em></span>
+      <span class="bmeasure"><span class="bfill"
+        style="width:54.4%;--c:var(--series-1)"></span></span>
+      <span class="bval">1.36</span>
+      <span class="tip"><b>1.36 s/word · 44 wpm</b> — 39% faster than Bagan as
+      it exists, but about 5% slower than the hypothetical.</span>
+    </div>
+  </div>
+
+  <div class="group">
+  <p class="gtitle">Essay — sentences of 15 words or more</p>
+    <div class="brow" tabindex="0">
+      <span class="blab">Bagan as actually used</span>
+      <span class="bmeasure"><span class="bfill"
+        style="width:92.6%;--c:var(--series-2)"></span></span>
+      <span class="bval">2.32</span>
+      <span class="tip"><b>2.32 s/word</b> — longer words, same slow
+      entry.</span>
+    </div>
+    <div class="brow" tabindex="0">
+      <span class="blab">Bagan + our engine</span>
+      <span class="bmeasure"><span class="bfill"
+        style="width:55.2%;--c:var(--series-3)"></span></span>
+      <span class="bval">1.38</span>
+      <span class="tip"><b>1.38 s/word</b> — the hypothetical again.</span>
+    </div>
+    <div class="brow" tabindex="0">
+      <span class="blab">BurmaKey</span>
+      <span class="bmeasure"><span class="bfill"
+        style="width:57.4%;--c:var(--series-1)"></span></span>
+      <span class="bval">1.44</span>
+      <span class="tip"><b>1.44 s/word</b> — 38% faster than Bagan as it
+      exists, about 4% slower than the hypothetical.</span>
+    </div>
+  </div>
+</div>
+<div class="xaxis" aria-hidden="true"><span>0</span><span>0.5</span><span>1.0</span><span>1.5</span><span>2.0</span><span>2.5</span></div>
+<div class="xunit">seconds per word</div>
+
+<details class="tbl"><summary>Table view — including the sensitivity sweep</summary><div class="scroll-x">
+<table>
+<thead><tr><th>System</th><th>Chat s/word</th><th>Essay s/word</th><th>Chat wpm</th></tr></thead>
+<tbody>
+<tr><td>Bagan / TTKeyboard as actually used</td><td>2.22</td><td>2.32</td><td>27.1</td></tr>
+<tr><td>Bagan + our engine (does not exist)</td><td>1.30</td><td>1.38</td><td>46.3</td></tr>
+<tr><td>Bagan + our engine + ideal key placement</td><td>1.25</td><td>1.35</td><td>48.1</td></tr>
+<tr><td>BurmaKey (Burglish in, script out)</td><td>1.36</td><td>1.44</td><td>44.1</td></tr>
+<tr><td>BurmaKey vs Bagan as used — sweep range</td><td>−45.5% … −23.6%</td><td>−44.6% … −23.7%</td><td>—</td></tr>
+<tr><td>BurmaKey vs Bagan + engine — sweep range</td><td>+3.6% … +6.2%</td><td>+3.0% … +5.1%</td><td>—</td></tr>
+</tbody></table></div></details>
+</figure>
+
+<div class="callout">
+<p><b>The phone model is less flattering than the tap count, and it corrects
+two earlier claims.</b> Against Bagan as it actually exists, BurmaKey is
+<b>about 38% faster</b>, not the ~50% the tap count implied — because a
+candidate pick costs a scan that a tap count treats as free. Against a
+hypothetical Bagan carrying this exact engine, BurmaKey is not the
+&ldquo;statistical tie&rdquo; reported earlier: it is consistently
+<b>3–6% slower</b>, in every one of the 81 parameter combinations tested.
+Script characters simply narrow the candidate list faster than Latin letters,
+and bigger Latin keys do not quite buy that back.</p>
+<p>Both conclusions are robust in <i>sign</i> across the whole sweep, but the
+magnitudes move a lot — the advantage over real competitors ranges from −24%
+to −46% depending on how expensive you believe a visual scan is. Treat the
+direction as the finding and the size as an estimate.</p>
+<p><b>What survives is the original point, sharpened: the engine is the
+product.</b> The measured advantage comes almost entirely from prediction, not
+from the Latin input code. BurmaKey&rsquo;s real edge over the hypothetical is
+the part this model cannot score — no script layout to learn (the Burglish
+generation already has Latin muscle memory), and free English↔Burmese
+code-switching without swapping keyboards. The product implication is
+unchanged and now better supported: ship <b>both</b> input modes over one
+engine.</p>
+</div>
+
+<p class="sub">Reproduce: <code>python3 src/h2h_mobile.py --sweep</code>. The
+cost model&rsquo;s per-action constants are literature-shaped assumptions, not
+measurements of Myanmar users — which is why every headline above is given as
+a swept range. The BurmaKey tap figures reproduce the earlier study exactly
+(2.45 / 2.67); the two Bagan arms land slightly below the earlier run
+(5.10 vs 5.24, 2.33 vs 2.42) because the original head-to-head script was
+never committed and had to be rebuilt from its description.</p>
+
+<h2>Does it hold outside the news register?</h2>
+<p>myPOS is news and general text, but the keyboard targets chat. A simulated
+chat stream — 600 messages, 3,308 words assembled from conversational
+high-frequency vocabulary, with approximate word order — brackets that
+register from below.</p>
+
+<figure class="chart">
+<figcaption>Chat-register simulation — taps per word</figcaption>
+<p class="csub">Word order is approximate, which understates the engine. Treat
+this as a floor, not an estimate.</p>
+<div class="plot">
+  <div class="gridlines" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <div class="brow" tabindex="0">
+    <span class="blab">Burmese script, key-per-character</span>
+    <span class="bmeasure"><span class="bfill" style="width:96.8%"></span></span>
+    <span class="bval">5.81</span>
+    <span class="tip"><b>5.81 taps/word</b> — script typing on the simulated
+    chat stream.</span>
+  </div>
+  <div class="brow" tabindex="0">
+    <span class="blab">Burglish typed out <em>57% ambiguous</em></span>
+    <span class="bmeasure"><span class="bfill" style="width:91.2%"></span></span>
+    <span class="bval">5.47</span>
+    <span class="tip"><b>5.47 taps/word</b> — and 57% of words still reach the
+    reader ambiguous.</span>
+  </div>
+  <div class="brow" tabindex="0">
+    <span class="blab">BurmaKey engine <em>unambiguous</em></span>
+    <span class="bmeasure"><span class="bfill"
+      style="width:55.0%;--c:var(--series-1)"></span></span>
+    <span class="bval">3.30</span>
+    <span class="tip"><b>3.30 taps/word</b> — −43% against script, −40%
+    against Burglish. The gains hold outside the news register.</span>
+  </div>
+</div>
+<div class="xaxis" aria-hidden="true"><span>0</span><span>2</span><span>4</span><span>6</span></div>
+<div class="xunit">taps per word</div>
+
+<details class="tbl"><summary>Table view</summary><div class="scroll-x">
+<table>
+<thead><tr><th>System</th><th>Taps/word</th><th>Receiver ambiguity</th></tr></thead>
+<tbody>
+<tr><td>Burmese script, key-per-character</td><td>5.81</td><td>0%</td></tr>
+<tr><td>Burglish typed out</td><td>5.47</td><td>57%</td></tr>
+<tr><td>BurmaKey engine</td><td>3.30</td><td>0%</td></tr>
+</tbody></table></div></details>
+</figure>
+
+<p>Zero-key prediction collapses to 0.9% here, which confirms it derives from
+real syntax rather than from the lexicon: scramble the word order and the
+bigram prior stops paying. Real chat sits between this floor and the +18%
+measured on real sentences.</p>
+
+<h2>Method</h2>
+<p>myG2P provides 24,802 words with tone-marked romanizations. Mining its
+syllable alignments yields a 2,348-entry syllable→roman map plus a rule
+syllable-breaker (89.4% exact match against myG2P&rsquo;s own splits), which
+romanizes 16,192 corpus words — <b>87.3% token coverage</b> of real running
+text. A first iteration using the dictionary alone reached only 21.1%
+coverage, and its results were discarded as biased.</p>
+<p>myPOS supplies 41,738 real segmented sentences: 39,738 for training
+(frequencies, bigram prior) and 2,000 held out for test (19,898 scored
+tokens). The input code is toneless Burglish — tone marks stripped from
+MLC-style romanization. Output is Burmese script, unambiguous by construction.
+The engine is a learning ranker over lexicon candidates
+(<code>freq + 10·recency + 100·bigram</code>, beam 50, 5-candidate bar). It
+carries no Burmese knowledge: only the lexicon and the romanizer are
+language-specific, together about 100 lines mined from existing CC-licensed
+resources.</p>
+
+<div class="tiles">
+  <div class="tile"><b>24,802</b><span>myG2P words with tone-marked
+  romanization</span></div>
+  <div class="tile"><b>2,348</b><span>syllable→roman entries mined from
+  alignments</span></div>
+  <div class="tile"><b>41,738</b><span>real segmented myPOS sentences</span></div>
+  <div class="tile"><b>16,192</b><span>words in the shipped browser
+  lexicon</span></div>
+</div>
+
+<h2>What this does not show</h2>
+<ul>
+<li>Every number is <b>simulation with a perfect typist</b> — no typos, instant
+candidate recognition. No human has typed on this keyboard.</li>
+<li>Picking from the suggestion bar happens on about <b>69%</b> of words. That
+is a real attention cost, and taps do not price it.</li>
+<li><b>12.7%</b> of tokens fall outside the romanizable lexicon and were
+skipped in scoring. The raw-fallback guarantee covers them in a real product,
+but they are not in these averages.</li>
+<li>Burglish spelling in the wild varies more than tone-stripped MLC
+romanization. The variant normalizer in the web keyboard was derived from
+spelling logic, not from Burmese users, and needs native tuning.</li>
+<li>The script-typing baseline is one key per codepoint. That is a fair
+approximation of layout keyboards but ignores shift-layer costs — which would
+worsen the baseline, not the engine.</li>
+<li>myPOS is news and general register, not chat. The simulation above brackets
+it; it does not measure it.</li>
+</ul>
+
+<h2>Try it, then tell us what is wrong</h2>
+<p>The keyboard runs entirely in the browser — the 16,192-word lexicon, the
+prediction and the learning all stay on your device, and your message text is
+never sent anywhere. What the project needs now is not more engineering but
+Burmese eyes on the output.</p>
+<p>
+<a class="cta mm" href="../web-my/">စမ်းကြည့်ပါ · Try the keyboard</a>
+<a class="cta ghost" href="../demos/burmese-race.html">Watch the typing race</a>
+</p>
+
+<footer>
+Source notes for this page: <a href="../docs/burmese-study.md">docs/burmese-study.md</a>
+(the raw study, unchanged) ·
+<a href="https://github.com/bluekite2000/burmakey">source code on GitHub</a><br>
+Data: <a href="https://github.com/ye-kyaw-thu/myG2P">myG2P</a> and
+<a href="https://github.com/ye-kyaw-thu/myPOS">myPOS</a> by Ye Kyaw Thu et al.,
+CC BY-NC-SA 4.0 — this project is free and noncommercial.<br>
+Simulated results, not user trials. Not yet reviewed by a native Burmese
+speaker — corrections welcome.
+</footer>
+
+</div>
+</body></html>

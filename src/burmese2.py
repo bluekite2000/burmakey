@@ -119,16 +119,21 @@ def simulate(shortlist=5, pretrain=False):
 
 script = sum(len(w)+1 for w in test_toks if w in LEX)/cov
 burg   = sum(len(LEX[w])+1 for w in test_toks if w in LEX)/cov
-print(f"\nBASELINES over {cov:,} real tokens: script {script:.2f}  burglish {burg:.2f}")
-for name, kw in [("cold shortlist5", {}), ("pretrained shortlist5", {"pretrain":True}),
-                 ("pretrained shortlist3", {"pretrain":True,"shortlist":3})]:
-    r = simulate(**kw)
-    print(f"  {name:22}: {r['tpw']:.2f} taps/word  zero-key {r['zero']:.1f}%  "
-          f"bar {r['bar']:.1f}%  full {r['full']:.1f}%")
-    if name == "pretrained shortlist5": best = r
-print(f"\nBEST vs script typing : {100*(best['tpw']-script)/script:+.1f}%")
-print(f"BEST vs Burglish chat : {100*(best['tpw']-burg)/burg:+.1f}%  "
-      f"+ ambiguity {100*ta/cov:.0f}% -> 0%")
-json.dump({"syls":len(SYL),"lex":len(LEX),"cov":100*cov/len(test_toks),
-  "amb":100*ta/cov,"script":script,"burg":burg,"best":best},
-  open("burmese2_results.json","w"))
+
+# The report below only runs when this file is executed directly, so that
+# h2h_mobile.py can import the lexicon, corpus and engine above without
+# paying for three simulations it does not use.
+if __name__ == "__main__":
+    print(f"\nBASELINES over {cov:,} real tokens: script {script:.2f}  burglish {burg:.2f}")
+    for name, kw in [("cold shortlist5", {}), ("pretrained shortlist5", {"pretrain":True}),
+                     ("pretrained shortlist3", {"pretrain":True,"shortlist":3})]:
+        r = simulate(**kw)
+        print(f"  {name:22}: {r['tpw']:.2f} taps/word  zero-key {r['zero']:.1f}%  "
+              f"bar {r['bar']:.1f}%  full {r['full']:.1f}%")
+        if name == "pretrained shortlist5": best = r
+    print(f"\nBEST vs script typing : {100*(best['tpw']-script)/script:+.1f}%")
+    print(f"BEST vs Burglish chat : {100*(best['tpw']-burg)/burg:+.1f}%  "
+          f"+ ambiguity {100*ta/cov:.0f}% -> 0%")
+    json.dump({"syls":len(SYL),"lex":len(LEX),"cov":100*cov/len(test_toks),
+      "amb":100*ta/cov,"script":script,"burg":burg,"best":best},
+      open("burmese2_results.json","w"))

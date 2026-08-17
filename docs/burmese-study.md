@@ -82,30 +82,68 @@ resources; the ranker itself carries no Burmese knowledge. Scripts:
 
 Fairness design: both sides receive the IDENTICAL engine (freq + recency +
 bigram, corpus-pretrained, 5-candidate bar); only the input code differs.
-Streams: held-out real sentences — chat (≤8 words, 800 msgs) and essay
-(≥15 words, 200 sentences), ~4.7k words each. Layer costs measured: the top
-33 script characters cover 97.2% of real keystrokes, so shift-layer overhead
-is only ~3% — script entry is not as layer-punished as assumed.
+Streams: held-out real sentences — chat (<=8 words, 800 msgs) and essay
+(>=15 words, 200 sentences), ~4.7k words each. Layer costs measured: a 40-key
+base layer covers 99.5% of real keystrokes, so layer-switch overhead is
+negligible — script entry is not as layer-punished as assumed.
+
+### First pass — taps per word
 
 | taps/word | chat | essay |
 |---|---|---|
-| Bagan as actually used (weak prediction) | 5.24 | 5.41 |
-| Bagan + ideal engine (does not exist) | 2.42 | 2.58 |
-| BurmaKey (Burglish in, script out) | 2.45 | 2.67 |
+| Bagan as actually used (character entry) | 5.10 | 5.30 |
+| Bagan + ideal engine (does not exist) | 2.33 | 2.51 |
+| Draft 4 / BurmaKey (Burglish in, script out) | 2.45 | 2.67 |
 
-**Findings.** (1) Against Bagan as it exists, BurmaKey halves the taps
-(−52% chat, −50% essay; ~29 → ~61 wpm at 2.5 taps/s). (2) Against a
-hypothetical Bagan carrying our exact engine over script keys, it is a
-statistical tie — script characters are more informative per tap, offsetting
-the 26-key simplicity. **The engine, not the Latin input code, is the entire
-measured advantage.** (3) BurmaKey's remaining edge over the hypothetical is
-qualitative: no script-layout skill needed (the Burglish generation already
-has Latin muscle memory), larger key targets (typo rates unmodelled but
-favour 26 keys), and free English↔Burmese code-switching without keyboard
-switching — pervasive in real Myanmar chat. (4) Product implication: ship
-BOTH input modes over one engine — script-prefix prediction for script
-typists, Burglish for the chat generation. The engine is the product; input
-codes are skins.
+Note: BurmaKey's figures reproduce the original head-to-head exactly
+(2.45 / 2.67); the two Bagan arms land slightly below the first run
+(5.10 vs 5.24, 2.33 vs 2.42) because that script was never committed and had
+to be rebuilt from its description. `src/h2h_mobile.py`.
+
+### Second pass — seconds per word on a phone
+
+A tap is not a tap on a handset. Four effects the tap count hides, and they do
+not all favour us: (1) a Myanmar layout packs ~11 columns where Latin gets 10,
+so its keys are smaller — slower and more error-prone under Fitts's law;
+(2) overflow glyphs sit behind a layer switch, which turns out to be nearly
+irrelevant at 99.5% base-layer coverage; (3) a candidate-bar pick is one tap
+but adds a visual scan that grows with position, plus a long reach — both
+engine systems pay this on most words; (4) script characters carry more
+information per tap, so the script system reaches the right candidate in fewer
+keystrokes (2.33 vs 2.45).
+
+Costing every action in seconds — Fitts's law from real key sizes and the
+actual key-to-key travel of the typed sequence, a position-dependent scan for
+candidate picks, and notice + backspace + retap for mis-taps:
+
+| s/word | chat | essay | chat wpm |
+|---|---|---|---|
+| Bagan as actually used | 2.22 | 2.32 | 27.1 |
+| Bagan + ideal engine (does not exist) | 1.30 | 1.38 | 46.3 |
+| Bagan + ideal engine + ideal key placement | 1.25 | 1.35 | 48.1 |
+| Draft 4 / BurmaKey | 1.36 | 1.44 | 44.1 |
+
+**This corrects two earlier claims.** (1) Against Bagan as it exists, the gain
+is **~38%, not ~50%** — a candidate pick costs a scan that a tap count treats
+as free. (2) Against a hypothetical Bagan carrying our exact engine, it is
+**not a "statistical tie": BurmaKey is consistently 3-6% slower**, in all 81
+parameter combinations swept. Script characters narrow the candidate list
+faster than Latin letters, and bigger Latin keys do not quite buy that back.
+
+Sensitivity sweep (81 combinations of Fitts b, scan base, scan-per-slot, error
+rate): vs Bagan-as-used −45.5%…−23.6% (chat), −44.6%…−23.7% (essay); vs
+Bagan+engine +3.6%…+6.2% (chat), +3.0%…+5.1% (essay). Both signs are stable
+across the entire sweep; the magnitudes are not. The per-action constants are
+literature-shaped assumptions, not measurements of Myanmar users.
+
+**What survives, sharpened: the engine is the product.** The measured
+advantage is prediction, not the Latin input code. BurmaKey's remaining edge
+over the hypothetical is what this model cannot score: no script-layout skill
+needed (the Burglish generation already has Latin muscle memory), larger key
+targets, and free English<->Burmese code-switching without keyboard switching —
+pervasive in real Myanmar chat. Product implication, unchanged and now better
+supported: ship BOTH input modes over one engine. The engine is the product;
+input codes are skins.
 
 
 ## Chat-register simulation and the try-it web keyboard

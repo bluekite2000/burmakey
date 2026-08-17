@@ -28,18 +28,27 @@ Zawgyi/Unicode split.
   the ambiguity problem entirely.
 - Hard floor: an unrecognized word (name, slang) is sent exactly as typed — it
   can never be worse than the status quo.
-- Head-to-head against Bagan (10M+ downloads, market leader): against Bagan as
-  it actually behaves, taps are roughly halved (−52% chat, −50% essay). Against
-  a hypothetical Bagan carrying this exact engine over script keys, it is a
-  statistical tie — **the engine, not the Latin input code, is the measured
-  advantage.**
+- Head-to-head against Bagan (10M+ downloads, market leader), re-run with a
+  **mobile cost model** — seconds per word on a modelled phone (Fitts's law
+  from real key sizes and travel, a position-dependent scan for candidate
+  picks, mis-tap correction) rather than undifferentiated taps. Against Bagan
+  as it actually behaves, BurmaKey is **~38% faster** (27 → 44 wpm). Against a
+  hypothetical Bagan carrying this exact engine over script keys it is
+  **3–6% slower**, consistently across an 81-point sensitivity sweep — script
+  characters narrow the candidate list faster than Latin letters. Both
+  corrections are less flattering than the earlier tap-count claims of −52%
+  and "a statistical tie". **The engine, not the Latin input code, is the
+  measured advantage.**
 - Corpus pretraining helps here (+0.10 taps saved, zero-key 14.7→17.9%)
   because train and test share register. Pretraining on a *mismatched* register
   hurts instead, so the corpus has to match the target register.
 - Shortlist of 5 candidates beats 3 (2.58 vs 2.84 taps/word).
 - Only 1.2% of in-lexicon tokens had to be typed out in full.
 
-Full method, numbers and caveats: [docs/burmese-study.md](docs/burmese-study.md).
+Full method, numbers and caveats: **[study/index.html](study/index.html)** —
+the study page, with charts, comparison tables and sensitivity ranges (open it
+in a browser, or visit `/study/` on the deployed site). Raw notes:
+[docs/burmese-study.md](docs/burmese-study.md).
 
 ## Try the keyboard
 
@@ -80,11 +89,18 @@ git clone https://github.com/ye-kyaw-thu/myPOS /tmp/mypos
 cd src
 python3 burmese.py        # iteration 1: dictionary-only romanizer (biased, kept for the record)
 python3 burmese2.py       # iteration 2: syllable romanizer, 87.3% coverage, headline numbers
+python3 h2h_mobile.py --sweep   # head-to-head vs Bagan/TTKeyboard, mobile cost model
 python3 mm_chat.py        # chat-register simulation (needs mm_data.pkl, see below)
 python3 build_web_my.py   # regenerate the web keyboard (needs weblex_my.txt, see below)
 ```
 
-Only the standard library is needed. Note that `mm_chat.py` and
+Only the standard library is needed. Re-runs are not bit-identical: the
+ranker breaks score ties by set-iteration order, which varies with Python's
+string hash seed, so the last decimal drifts (2.5804 vs 2.5803 taps/word).
+Every published figure is unaffected at the precision quoted; set
+`PYTHONHASHSEED=0` if you want an exactly repeatable run.
+
+Note that `mm_chat.py` and
 `build_web_my.py` read two intermediate artifacts — `mm_data.pkl` and
 `weblex_my.txt` — that are not committed and are not produced by any script in
 this repo; they were built ad hoc in the original session. Regenerating them
