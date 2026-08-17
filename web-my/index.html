@@ -132,6 +132,8 @@ transition:transform .07s ease-out,background .07s ease-out}
 .cd .rm{font-size:9.5px;color:var(--dim);display:block;
 font-family:ui-monospace,Menlo,monospace}
 .cd.raw .lo{font-family:ui-monospace,Menlo,monospace;font-size:14px;color:var(--dim)}
+.cd.punc{background:transparent;border-color:var(--ln);min-width:52px}
+.cd.punc .lo{font-size:20px}
 .hint{color:#5d6b73;font-size:13px;align-self:center;padding-left:8px}
 
 /* ---------- More pane ---------- */
@@ -230,6 +232,12 @@ order. Off by default. Tap to preview exactly what would be sent.</label>
 </div>
 
 <div class="foot">
+<b>ခလုတ်များ · the keys</b><br>
+You use your phone's own keyboard — there is no new layout to learn.<br>
+<b>space</b> — takes the highlighted word · <b>backspace</b> — deletes the last
+word once the box is empty · <b>enter</b> — sends · <b>123</b> — offers ၀-၉ or
+0-9 · <b>. ,</b> — offers ။ and ၊, which are also always on the suggestion
+strip · <b>space twice</b> — a real space, for mixing English in.<br><br>
 <b>ဒါဘာလဲ · what is this?</b><br>
 A keyboard idea for Burmese: type Burglish the way you already do in chat —
 no tones, no new spelling, no Myanmar layout to learn — and it writes real
@@ -16567,12 +16575,41 @@ function candidates(txt){
   }
   return ids.sort((a,b)=>score(b)-score(a)).slice(0,5);
 }
+function addChip(bar,big,small,act,cls){
+  const d=document.createElement("div");d.className="cd"+(cls?" "+cls:"");
+  const a=document.createElement("span");a.className="lo";a.textContent=big;
+  const b=document.createElement("span");b.className="rm";b.textContent=small;
+  d.appendChild(a);d.appendChild(b);
+  chip(d,act,big+" — "+small);
+  bar.appendChild(d);
+  return d;
+}
 function render(){
-  const txt=$("inp").value.trim().toLowerCase().replace(/[^a-z]/g,"");
+  const rawv=$("inp").value.trim();
+  const txt=rawv.toLowerCase().replace(/[^a-z]/g,"");
+  const digits=rawv.replace(/[^0-9]/g,"");
+  const marks=rawv.replace(/[a-z0-9\s]/gi,"");
   const bar=$("bar");bar.innerHTML="";
+
+  /* a number: offer it in Burmese numerals and in Latin digits */
+  if(digits&&!txt){
+    addChip(bar,toMyNum(digits),"မြန်မာဂဏန်း · Burmese",
+            ()=>insertRaw(toMyNum(digits),"num"));
+    addChip(bar,digits,"ဂဏန်း · digits",()=>insertRaw(digits,"num"),"raw");
+    bar.scrollLeft=0;return;
+  }
+  /* punctuation typed on its own: . and , have Burmese equivalents */
+  if(marks&&!txt&&!digits){
+    if(/[.]/.test(marks))addChip(bar,"။","ပုဒ်ကြီး · sentence",
+                                 ()=>insertRaw("။","punct"));
+    if(/[,]/.test(marks))addChip(bar,"၊","ပုဒ်ဖြတ် · clause",
+                                 ()=>insertRaw("၊","punct"));
+    addChip(bar,marks,"ရိုက်သည့်အတိုင်း · as typed",
+            ()=>insertRaw(marks,"punct"),"raw");
+    bar.scrollLeft=0;return;
+  }
+
   const cs=candidates(txt);
-  if(!txt&&!cs.length){
-    bar.innerHTML='<span class="hint">စရိုက်ပါ — try: nay kaung la</span>';return}
   cs.forEach((i,pos)=>{
     const d=document.createElement("div");d.className="cd";
     d.innerHTML='<span class="lo">'+LO[i]+'</span><span class="rm">'+KK[i]+'</span>';
@@ -16584,6 +16621,16 @@ function render(){
     d.innerHTML='<span class="lo">'+txt+'</span><span class="rm">ရိုက်သည့်အတိုင်း · as typed</span>';
     chip(d,()=>commit(null,txt,-1,false),txt+" — as typed");
     bar.appendChild(d);
+  }else{
+    /* nothing being typed: the two Burmese marks that no Latin keyboard has,
+       always within reach */
+    addChip(bar,"။","ပုဒ်ကြီး · sentence",()=>insertRaw("။","punct"),"punc");
+    addChip(bar,"၊","ပုဒ်ဖြတ် · clause",()=>insertRaw("၊","punct"),"punc");
+    if(!cs.length){
+      const h=document.createElement("span");h.className="hint";
+      h.textContent="စရိုက်ပါ — try: nay kaung la";
+      bar.appendChild(h);
+    }
   }
   bar.scrollLeft=0;
 }
@@ -16626,7 +16673,35 @@ function commit(i,raw,pos,zeroKey){
   $("inp").value="";drawMsg();render();drawStats();$("inp").focus({preventScroll:true});
 }
 let sent=[];
-function msgText(){return words.map(w=>w.my).join(words.some(w=>w.raw)?" ":"")}
+const MY_DIGITS="၀၁၂၃၄၅၆၇၈၉";
+const toMyNum=s=>s.replace(/[0-9]/g,d=>MY_DIGITS[+d]);
+/* Burmese script runs words together; Latin fragments need spaces around
+   them, and punctuation always hugs the word before it. */
+function msgText(){
+  let s="";
+  for(let i=0;i<words.length;i++){
+    const w=words[i];
+    if(w.space){s+=" ";continue}
+    if(i>0){
+      const pv=words[i-1];
+      if(!pv.space&&!w.punct&&(w.raw||pv.raw))s+=" ";
+    }
+    s+=w.my;
+  }
+  return s;
+}
+/* Insert something that is not a dictionary word: punctuation, a number, a
+   literal space. Deliberately kept out of the taps/word metrics, which
+   measure word entry and are what the study reports. */
+function insertRaw(text,kind){
+  words.push({my:text,rom:"",raw:kind!=="punct",punct:kind==="punct",
+              space:kind==="space"});
+  M.extras=(M.extras||0)+1;
+  prev=null;                       /* punctuation and spaces end a bigram run */
+  $("inp").value="";
+  drawMsg();render();drawStats();
+  $("inp").focus({preventScroll:true});
+}
 function clockHM(){
   const d=new Date();let h=d.getHours();const m=String(d.getMinutes()).padStart(2,"0");
   const ap=h<12?"AM":"PM";h=h%12||12;return h+":"+m+" "+ap;
@@ -16691,10 +16766,29 @@ function clearAll(){words=[];prev=null;drawMsg();render()}
 
 $("inp").addEventListener("input",render);
 $("inp").addEventListener("keydown",e=>{
+  /* backspace on an empty box deletes the last committed word, which is what
+     every native IME does and the only way to fix a mis-picked word without
+     hunting for the undo icon */
+  if((e.key==="Backspace"||e.key==="Delete")&&!$("inp").value){
+    if(words.length){e.preventDefault();undo()}
+    return;
+  }
+  /* a literal space, for mixed Burmese/English — Burmese words themselves
+     run together, so a space is only ever wanted deliberately */
+  if(e.key===" "&&!$("inp").value.trim()){
+    e.preventDefault();
+    if(words.length&&!words[words.length-1].space)insertRaw(" ","space");
+    return;
+  }
   if(e.key===" "||e.key==="Enter"){
     e.preventDefault();
     const txt=$("inp").value.trim().toLowerCase().replace(/[^a-z]/g,"");
-    if(!txt){if(e.key==="Enter")sendMsg();return}
+    if(!txt){
+      const rest=$("inp").value.trim();
+      if(rest){insertRaw(rest,/^[0-9]+$/.test(rest)?"num":"punct");return}
+      if(e.key==="Enter")sendMsg();
+      return;
+    }
     const cs=candidates(txt);
     if(cs.length&&norms(txt).some(v=>KK[cs[0]].startsWith(v)))
       commit(cs[0],null,0,false);
