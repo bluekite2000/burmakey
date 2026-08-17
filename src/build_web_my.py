@@ -35,6 +35,13 @@ transition:height .14s ease-out}
 .topbar{flex:0 0 auto;display:flex;align-items:center;gap:11px;
 background:var(--head);padding:8px 10px;
 padding-top:calc(8px + env(safe-area-inset-top))}
+/* every tab is otherwise a dead end, and a tester who opened web-my/#test
+   directly has no history to go back through */
+.back{flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+width:44px;height:44px;margin-left:-10px;margin-right:-6px;
+color:var(--ink);font-size:27px;
+line-height:1;text-decoration:none;-webkit-tap-highlight-color:transparent}
+.back:active{opacity:.55}
 .avatar{flex:0 0 auto;width:40px;height:40px;border-radius:50%;
 background:linear-gradient(145deg,#0b8f74,#046b56);color:#e9edef;
 display:flex;align-items:center;justify-content:center;font-size:19px}
@@ -220,6 +227,8 @@ a{color:#53bdeb}
 </form><div class="app">
 
 <div class="topbar">
+ <a class="back" href="../" aria-label="ပင်မစာမျက်နှာ · back to the home page"
+  title="ပင်မစာမျက်နှာ · home">‹</a>
  <div class="avatar" aria-hidden="true">မ</div>
  <div class="who">
   <b>မြန်မာစာရိုက်</b>
