@@ -105,6 +105,9 @@ line-height:1.5}
 .bub.in{align-self:flex-start;background:var(--in);border-top-left-radius:2px;
 max-width:88%}
 .bub.in .bt{font-size:15px;line-height:1.6}
+.bub.in .ask{display:inline-block;margin:6px 0 2px;font-size:19px;
+line-height:1.8;color:#eafff6}
+.bub.in .dim{color:#8fb9ad;font-size:13px}
 .bub.in .act{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
 .bub.in .act button{flex:0 0 auto;background:var(--acc);color:#06231c;border:0;
 border-radius:9px;padding:9px 14px;font:13px inherit;font-weight:600;
@@ -196,7 +199,7 @@ padding:10px 12px;font-size:12.5px;color:#ffc9c9;line-height:1.55}
   outline:3px solid #ff8080;outline-offset:2px}}
 
 /* ---------- More pane ---------- */
-#pane-help,#pane-about{overflow-y:auto;-webkit-overflow-scrolling:touch;
+#pane-about{overflow-y:auto;-webkit-overflow-scrolling:touch;
 overscroll-behavior-y:contain;display:flex;flex-direction:column;gap:12px;
 padding:14px 14px calc(16px + env(safe-area-inset-bottom))}
 button{background:var(--pill);border:1px solid var(--ln);color:var(--ink);
@@ -249,8 +252,6 @@ a{color:#53bdeb}
 <nav class="tabs" role="tablist" aria-label="အပိုင်းများ · sections">
  <button role="tab" id="tab-chat"  aria-selected="true"  aria-controls="pane-chat"
   aria-label="စကား · Chat" onclick="showTab('chat')">စကား</button>
- <button role="tab" id="tab-help"  aria-selected="false" aria-controls="pane-help"
-  aria-label="ကူညီပါ · help us improve it" onclick="showTab('help')">ကူညီပါ</button>
  <button role="tab" id="tab-about" aria-selected="false" aria-controls="pane-about"
   aria-label="အကြောင်း · About" onclick="showTab('about')">အကြောင်း</button>
 </nav>
@@ -286,40 +287,16 @@ a{color:#53bdeb}
  </div>
 </section>
 
-<section class="pane" id="pane-help" role="tabpanel" aria-labelledby="tab-help" hidden>
-<div class="exstart">
-<h2>လေ့ကျင့်ခန်း · guided test <span style="color:var(--dim);font-weight:400">(~20 min)</span></h2>
-<p>18 short tasks: copy 10 sentences, 5 tricky ones (numbers, punctuation,
-English, a name), then write 3 messages of your own. This is what turns your
-session into a number we can compare against the simulation — and it is the
-only way we learn how <i>you</i> spell Burglish.</p>
-<label><input type="checkbox" id="exok">လေ့ကျင့်ခန်းအတွင်း ရိုက်သည်များကို မှတ်တမ်းတင်မည် ·
-record what I type <b>during the exercise only</b> — the sentences are given
-to you, and the 3 free messages are yours to choose. Nothing else is recorded.</label>
-<div class="exerr" id="exerr" role="alert" aria-live="assertive" hidden></div>
-<button class="pri" id="exgo" onclick="exStart()">စတင်မည် · start the test</button>
-</div>
-
-<div class="fb">
-<h2>သင့်အမြင် · your feedback</h2>
-<div class="thumbs">
- <button id="up" onclick="thumb(1)">👍</button>
- <button id="dn" onclick="thumb(-1)">👎</button>
- <span class="hint">အဆင်ပြေလား · does it work for you?</span>
-</div>
-<textarea id="cmt" placeholder="ဘယ်စာလုံးတွေ မှားလဲ · which words were wrong? tell us anything (optional)"></textarea>
+<section class="pane" id="pane-about" role="tabpanel" aria-labelledby="tab-about" hidden>
+<div class="foot" style="border:0;padding-top:0">
+<b>မျှဝေမှု · sharing</b><br>
 <label><input type="checkbox" id="oovok">also share words the keyboard did NOT know
 (only those exact words — never your full message)</label>
 <label><input type="checkbox" id="donate">ကျွန်ုပ်ရိုက်သည်များကို လှူမည် · donate my typing
 to improve the dictionary — shares what you typed and the words you chose, in
 order. Off by default. Tap to preview exactly what would be sent.</label>
 <div class="stats" id="donpre" style="display:none"></div>
-<button class="pri" onclick="sendFeedback()" id="sendbtn">📨 ပို့မည် · send feedback</button>
-</div>
-</section>
-
-<section class="pane" id="pane-about" role="tabpanel" aria-labelledby="tab-about" hidden>
-<div class="foot" style="border:0;padding-top:0">
+<button class="pri" onclick="sendFeedback()" id="sendbtn" style="width:100%;margin-top:8px">📨 ပို့မည် · send what I have given</button><br><br>
 <b>ခလုတ်များ · the keys</b><br>
 You use your phone's own keyboard — there is no new layout to learn.<br>
 <b>space</b> — takes the highlighted word · <b>backspace</b> — deletes the last
@@ -400,11 +377,18 @@ function beacon(extra){
 addEventListener("visibilitychange",()=>{
  if(document.visibilityState==="hidden"&&M.commits>0)beacon({event:"session"});
 });
-function thumb(v){M.thumb=v;
- document.getElementById("up").classList.toggle("on",v===1);
- document.getElementById("dn").classList.toggle("on",v===-1);}
+/* the thumbs are conversation buttons now; the old on-screen pair is gone */
+function thumb(v){
+ M.thumb=v;
+ const up=document.getElementById("up"),dn=document.getElementById("dn");
+ if(up)up.classList.toggle("on",v===1);
+ if(dn)dn.classList.toggle("on",v===-1);
+}
 function sendFeedback(){
- const cmt=document.getElementById("cmt").value.slice(0,2000);
+ /* answers come from the conversation now; the textarea is gone */
+ const el=document.getElementById("cmt");
+ const cmt=(el?el.value:
+   (convo.answers||[]).map(a=>a.q+": "+a.a).join(" | ")).slice(0,2000);
  const ok=beacon({event:"feedback",comment:cmt});
  if(!ok){
   const body="Burmese keyboard feedback\n\n"+(cmt?("Comment: "+cmt+"\n\n"):"")+
@@ -565,11 +549,16 @@ function commit(i,raw,pos,zeroKey){
   }
   $("inp").value="";drawMsg();render();drawStats();$("inp").focus({preventScroll:true});
 }
-let sent=[];
+/* ================= the thread =================
+   One message list, both directions. The guided test and the feedback
+   questions are conversation turns rather than a separate screen: the app
+   asks, you answer by typing, the way you would with a person. */
+let msgs=[];                 // {dir:"in"|"out", html|text, rom, time, acts}
+const ZW=/​/g;
+const bare=s=>(s||"").replace(ZW,"");
+
 const MY_DIGITS="၀၁၂၃၄၅၆၇၈၉";
 const toMyNum=s=>s.replace(/[0-9]/g,d=>MY_DIGITS[+d]);
-/* Burmese script runs words together; Latin fragments need spaces around
-   them, and punctuation always hugs the word before it. */
 function msgText(){
   let s="";
   for(let i=0;i<words.length;i++){
@@ -583,14 +572,11 @@ function msgText(){
   }
   return s;
 }
-/* Insert something that is not a dictionary word: punctuation, a number, a
-   literal space. Deliberately kept out of the taps/word metrics, which
-   measure word entry and are what the study reports. */
 function insertRaw(text,kind){
   words.push({my:text,rom:"",raw:kind!=="punct",punct:kind==="punct",
               space:kind==="space"});
   M.extras=(M.extras||0)+1;
-  prev=null;                       /* punctuation and spaces end a bigram run */
+  prev=null;
   $("inp").value="";
   drawMsg();render();drawStats();
   $("inp").focus({preventScroll:true});
@@ -599,24 +585,27 @@ function clockHM(){
   const d=new Date();let h=d.getHours();const m=String(d.getMinutes()).padStart(2,"0");
   const ap=h<12?"AM":"PM";h=h%12||12;return h+":"+m+" "+ap;
 }
-function bubble(text,rom,draft,time){
-  const b=document.createElement("div");
-  b.className="bub out"+(draft?" draft":"");
-  const t=document.createElement("span");t.className="bt";t.textContent=text;
-  b.appendChild(t);
-  if(rom){const r=document.createElement("span");r.className="rom";
-    r.textContent=rom;b.appendChild(r)}
-  const m=document.createElement("span");m.className="meta";
-  if(draft){m.textContent="ရေးဆွဲနေသည် · draft"}
-  else{m.innerHTML=time+' <span class="ck">✓✓</span>'}
-  b.appendChild(m);
-  return b;
+function store(k,v){try{v===undefined?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}
+function stored(k){try{return localStorage.getItem(k)}catch(e){return null}}
+const seenKey="burmakey.seen", fbKey="burmakey.asked";
+
+/* the app speaks */
+function say(html,acts){
+  /* only the newest message keeps live buttons: a stale "skip" further up the
+     thread would act on whatever question we have since moved to */
+  msgs.forEach(m=>{if(m.acts)m.acts=null});
+  msgs.push({dir:"in",html:html,acts:acts||null,time:clockHM()});
+  drawMsg();
 }
-/* the thread IS the message display: sent bubbles plus the live draft */
+/* the person spoke */
+function heard(text,rom){
+  msgs.push({dir:"out",text:text,rom:rom,time:clockHM()});
+}
+
 function drawMsg(){
   const t=$("thread");t.innerHTML="";
-  const showrom=$("showrom").checked;
-  if(!sent.length&&!words.length&&!nudges.length){
+  const showrom=$("showrom")&&$("showrom").checked;
+  if(!msgs.length&&!words.length){
     const e=document.createElement("div");e.className="empty";
     e.innerHTML="<b>သင့်စာသား ဒီမှာပေါ်မယ်</b>your message appears here — "+
       "type Burglish below, tap the word you meant";
@@ -625,234 +614,194 @@ function drawMsg(){
     const d=document.createElement("div");d.className="daypill";
     d.textContent="ယနေ့ · today";t.appendChild(d);
   }
-  nudges.filter(n=>n.at==="top").forEach(n=>t.appendChild(nudgeEl(n)));
-  sent.forEach(s=>{
-    const b=bubble(s.text,showrom?s.rom:"",false,s.time);
-    b.title="ကူးယူ · tap to copy";
-    b.addEventListener("click",()=>{
-      navigator.clipboard.writeText(s.text).then(()=>{
-        b.classList.add("copied");setTimeout(()=>b.classList.remove("copied"),1300);
+  msgs.forEach(m=>{
+    const b=document.createElement("div");
+    b.className="bub "+(m.dir==="in"?"in":"out");
+    const s=document.createElement("span");s.className="bt";
+    if(m.dir==="in")s.innerHTML=m.html; else s.textContent=m.text;
+    b.appendChild(s);
+    if(m.dir==="out"&&showrom&&m.rom){
+      const r=document.createElement("span");r.className="rom";
+      r.textContent=m.rom;b.appendChild(r);
+    }
+    if(m.acts&&m.acts.length){
+      const a=document.createElement("div");a.className="act";
+      m.acts.forEach(x=>{
+        const btn=document.createElement("button");
+        btn.textContent=x.label;
+        if(x.ghost)btn.className="ghost";
+        btn.onclick=()=>{m.acts=null;drawMsg();x.act()};
+        a.appendChild(btn);
       });
-    });
+      b.appendChild(a);
+    }
+    if(m.dir==="out"){
+      const meta=document.createElement("span");meta.className="meta";
+      meta.innerHTML=m.time+' <span class="ck">✓✓</span>';b.appendChild(meta);
+      b.title="ကူးယူ · tap to copy";
+      b.addEventListener("click",()=>{
+        navigator.clipboard.writeText(m.text).then(()=>{
+          b.classList.add("copied");setTimeout(()=>b.classList.remove("copied"),1300);
+        }).catch(()=>{});
+      });
+    }
     t.appendChild(b);
   });
-  nudges.filter(n=>n.at==="end").forEach(n=>t.appendChild(nudgeEl(n)));
   if(words.length){
-    t.appendChild(bubble(msgText(),
-      showrom?words.map(w=>w.rom||w.my).join(" "):"",true,""));
+    const b=document.createElement("div");b.className="bub out draft";
+    const s=document.createElement("span");s.className="bt";s.textContent=msgText();
+    b.appendChild(s);
+    if(showrom){const r=document.createElement("span");r.className="rom";
+      r.textContent=words.map(w=>w.rom||w.my).join(" ");b.appendChild(r)}
+    const m=document.createElement("span");m.className="meta";
+    m.textContent="ရေးဆွဲနေသည် · draft";b.appendChild(m);
+    t.appendChild(b);
   }
   t.scrollTop=t.scrollHeight;
   const empty=!words.length;
   ["undobtn","clrbtn","sendmsg"].forEach(id=>{const b=$(id);if(b)b.disabled=empty});
 }
-/* "send" commits the draft into the thread and copies it — nothing leaves
-   the device; the thread is the demo's own chat */
+
 function sendMsg(){
   const t=msgText();
-  if(ex.on){ if(!t && EX_ITEMS[ex.i].k!=="free") return; exNext(t); return; }
   if(!t)return;
-  sent.push({text:t,rom:words.map(w=>w.rom||w.my).join(" "),time:clockHM()});
+  heard(t,words.map(w=>w.rom||w.my).join(" "));
   words=[];prev=null;
   navigator.clipboard.writeText(t).catch(()=>{});
   drawMsg();render();drawStats();
   $("inp").focus({preventScroll:true});
+  if(convo.mode)setTimeout(()=>convoHeard(t),430);   // let their bubble land first
 }
 function undo(){if(words.length){M.undos++;words.pop();prev=null;drawMsg();render();drawStats()}}
 function clearAll(){words=[];prev=null;drawMsg();render()}
 
-$("inp").addEventListener("input",render);
-$("inp").addEventListener("keydown",e=>{
-  /* backspace on an empty box deletes the last committed word, which is what
-     every native IME does and the only way to fix a mis-picked word without
-     hunting for the undo icon */
-  if((e.key==="Backspace"||e.key==="Delete")&&!$("inp").value){
-    if(words.length){e.preventDefault();undo()}
-    return;
-  }
-  /* a literal space, for mixed Burmese/English — Burmese words themselves
-     run together, so a space is only ever wanted deliberately */
-  if(e.key===" "&&!$("inp").value.trim()){
-    e.preventDefault();
-    if(words.length&&!words[words.length-1].space)insertRaw(" ","space");
-    return;
-  }
-  if(e.key===" "||e.key==="Enter"){
-    e.preventDefault();
-    const txt=$("inp").value.trim().toLowerCase().replace(/[^a-z]/g,"");
-    if(!txt){
-      const rest=$("inp").value.trim();
-      if(rest){insertRaw(rest,/^[0-9]+$/.test(rest)?"num":"punct");return}
-      if(e.key==="Enter")sendMsg();
-      return;
-    }
-    const cs=candidates(txt);
-    if(cs.length&&norms(txt).some(v=>KK[cs[0]].startsWith(v)))
-      commit(cs[0],null,0,false);
-    else commit(null,txt,-1,false);
-  }
-});
-$("showrom").addEventListener("change",drawMsg);
-$("donate").addEventListener("change",()=>{
-  const p=$("donpre");
-  if($("donate").checked){
-    p.style.display="block";
-    p.textContent="will share ("+M.donated.length+" words): "+
-      M.donated.map(d=>d[0]+"→"+d[1]).slice(0,40).join("  ")+
-      (M.donated.length>40?" …":"");
-  }else{p.style.display="none"}
-});
-/* ================= guided exercise =================
-   The analytics know what was produced but not what the user was TRYING to
-   produce, so a copy task is unscoreable without this. Each item records the
-   target alongside the result, making accuracy and effort comparable across
-   users and against the simulation. */
 const EX_ITEMS = [{"k": "copy", "t": "ပြဿနာရှိပါသလား"}, {"k": "copy", "t": "ဘန်ကောက်မှာဘယ်အချိန်ရှိပြီလဲ"}, {"k": "copy", "t": "ဟုတ်ကဲ့ဒီမှာပါ"}, {"k": "copy", "t": "ရေခဲပြင်မှာချော်လဲပြီးဖင်ထိုင်လျက်ကျတယ်"}, {"k": "copy", "t": "နောက်ရထားတစ်စင်းရောဘယ်လိုလဲ"}, {"k": "copy", "t": "ဒါဘယ်လောက်ကျမလဲ"}, {"k": "copy", "t": "မဆိုးပါဘူးတဲ့"}, {"k": "copy", "t": "ဟုတ်ကဲ့ဒီမှာပါခင်ဗျာ"}, {"k": "copy", "t": "အဆောင်ပိုင်ရှင်အဒေါ်ကြီးကသဘောကောင်းလား"}, {"k": "copy", "t": "ဒီဟာကိုလိုချင်ပါတယ်"}, {"k": "stress", "t": "ခင်ဗျားဘာအားကစားကစားလဲ", "n": "ရှည်သောခလုတ် · long-press glyphs"}, {"k": "stress", "t": "ဘာဖြစ်လို့လဲ", "n": "ရှည်သောခလုတ် · long-press glyphs"}, {"k": "stress", "t": "ဈေးက ၂၅၀၀ ကျပ်ပါ။", "n": "ဂဏန်းနှင့်ပုဒ်ကြီး · numbers and ။"}, {"k": "stress", "t": "ok ကျေးဇူးတင်ပါတယ်", "n": "အင်္ဂလိပ်စာ ရောသုံး · mixed English"}, {"k": "stress", "t": "မောင်မောင် ဘယ်မှာလဲ", "n": "နာမည် · a name, tests the unknown-word fallback"}, {"k": "free", "t": "", "n": "သူငယ်ချင်းကို စာတစ်စောင်ရေးပါ · write a friend a message, anything you like"}, {"k": "free", "t": "", "n": "သူငယ်ချင်းကို စာတစ်စောင်ရေးပါ · write a friend a message, anything you like"}, {"k": "free", "t": "", "n": "သူငယ်ချင်းကို စာတစ်စောင်ရေးပါ · write a friend a message, anything you like"}];
-const ex = {on:false, i:0, rows:[], t0:0, snap:null};
+/* ================= the conversation ================= */
+const convo={mode:null,i:0,rows:[],answers:[],snap:null,t0:0};
+function snap(){
+  return {keys:M.keys,commits:M.commits,top1:M.top1,bar:M.barPick,
+          raw:M.raw,zero:M.zeroKey,extras:M.extras||0};
+}
+function convoHeard(text){
+  if(convo.mode==="test")testHeard(text);
+  else if(convo.mode==="fb")fbHeard(text);
+}
 
-function exSnap(){
-  return {keys:M.keys, commits:M.commits, top1:M.top1, bar:M.barPick,
-          raw:M.raw, zero:M.zeroKey, extras:M.extras||0};
+/* ---- the guided test, as a conversation ---- */
+function testOffer(){
+  say("<b>မင်္ဂလာပါ · hello</b><br>Type Burglish below and tap the Burmese word "+
+      "you meant — that is the whole idea.<br><br>If you have 20 minutes, I can "+
+      "walk you through <b>18 short tasks</b>. It turns your session into a "+
+      "number we can check our simulation against, and it is the only way we "+
+      "learn how <i>you</i> spell Burglish.<br><br><span class='dim'>I would "+
+      "record what you type during the tasks — the sentences are mine, and the "+
+      "3 free messages are yours to choose. Nothing else.</span>",
+      [{label:"ရပါတယ် · yes, let's go",act:testStart},
+       {label:"နောက်မှ · later",ghost:true,act:()=>{store(seenKey,"1");
+          say("ရပါတယ် · no problem — just type whenever you like.")}}]);
 }
-function exStart(){
-  if(!$("exok").checked){
-    /* a silent gate reads as a dead button: the consent line sits above the
-       fold of the thumb, so tinting its text was invisible. Say it out loud,
-       put the box back on screen, and flash the box itself. */
-    const e=$("exerr");
-    e.hidden=false;
-    e.textContent="☝ အရင်ဆုံး အထက်ကအကွက်ကို အမှန်ခြစ်ပါ · "+
-                  "please tick the box above first — the test records what you "+
-                  "type, so we need your say-so.";
-    const box=$("exok");
-    box.parentElement.scrollIntoView({block:"center",behavior:"smooth"});
-    box.classList.add("flash");
-    setTimeout(()=>box.classList.remove("flash"),1800);
-    return;
+function testStart(){
+  store(seenKey,"1");
+  convo.mode="test";convo.i=0;convo.rows=[];
+  say("ကောင်းပြီ · great. I will give you one at a time.");
+  setTimeout(askItem,700);
+}
+function askItem(){
+  const it=EX_ITEMS[convo.i],n=EX_ITEMS.length;
+  convo.snap=snap();convo.t0=Date.now();
+  const head="<span class='dim'>"+(convo.i+1)+" / "+n+"</span><br>";
+  const skip=[{label:"ကျော် · skip",ghost:true,act:()=>testHeard("",true)}];
+  if(it.k==="free")say(head+"သင့်စိတ်ကြိုက် · "+it.n,skip);
+  else say(head+"ဒီစာကြောင်းကို ရိုက်ပါ · type this:<br><span class='ask'>"+
+      it.t+"</span>"+(it.n?"<br><span class='dim'>"+it.n+"</span>":""),skip);
+}
+function testHeard(produced,skipped){
+  const it=EX_ITEMS[convo.i],a=convo.snap,b=snap();
+  const taps=b.keys-a.keys,commits=b.commits-a.commits;
+  const match=it.k==="free"?null:(bare(produced)===bare(it.t));
+  convo.rows.push({i:convo.i,kind:it.k,target:it.t,produced:produced,
+    match:match,skipped:!!skipped,taps:taps,words:commits,
+    tpw:commits?+(taps/commits).toFixed(2):null,
+    top1:b.top1-a.top1,bar:b.bar-a.bar,raw:b.raw-a.raw,
+    zero:b.zero-a.zero,extras:b.extras-a.extras,ms:Date.now()-convo.t0});
+  if(!skipped){
+    if(match===true)say("✓ <b>တိတိကျကျ · exact</b>");
+    else if(match===false)say("≈ ကွာသွားပါတယ် · I asked for <span class='ask'>"+
+      it.t+"</span> — never mind, carry on.");
+    else say("👍 ကျေးဇူးပါ · thank you.");
   }
-  $("exerr").hidden=true;
-  ex.on=true; ex.i=0; ex.rows=[]; sent=[]; words=[]; prev=null;
-  store(seenKey,"1"); nudges.length=0;
-  $("exbar").hidden=false;
-  $("exprog").max=EX_ITEMS.length;
-  showTab("chat");                    // back to the keyboard
-  exShow();
+  convo.i++;
+  if(convo.i>=EX_ITEMS.length)return testFinish();
+  setTimeout(askItem,650);
 }
-function exShow(){
-  const it=EX_ITEMS[ex.i];
-  $("exnum").textContent=(ex.i+1)+" / "+EX_ITEMS.length;
-  $("exprog").value=ex.i;
-  $("exkind").textContent={copy:"ကူးရိုက်ပါ · copy this",
-    stress:"ကူးရိုက်ပါ · copy this", free:"သင့်စိတ်ကြိုက် · your own words"}[it.k];
-  $("extarget").textContent=it.t||"—";
-  $("exnote").textContent=it.n||"";
-  ex.t0=Date.now(); ex.snap=exSnap();
-  $("inp").focus({preventScroll:true});
-}
-function exRecord(produced){
-  const it=EX_ITEMS[ex.i], a=ex.snap, b=exSnap();
-  const taps=(b.keys-a.keys), commits=(b.commits-a.commits);
-  ex.rows.push({i:ex.i, kind:it.k, target:it.t, produced:produced,
-    match: it.k==="free" ? null : (produced.replace(/\u200b/g,"")===it.t.replace(/\u200b/g,"")),
-    taps:taps, words:commits, tpw: commits? +(taps/commits).toFixed(2):null,
-    top1:b.top1-a.top1, bar:b.bar-a.bar, raw:b.raw-a.raw,
-    zero:b.zero-a.zero, extras:b.extras-a.extras,
-    ms:Date.now()-ex.t0});
-}
-function exNext(produced){
-  exRecord(produced||"");
-  ex.i++;
-  words=[]; prev=null;
-  if(ex.i>=EX_ITEMS.length){ exFinish(); return; }
-  drawMsg(); render(); exShow();
-}
-function exSkip(){ if(ex.on) exNext(msgText()); }
-function exQuit(){
-  ex.on=false; $("exbar").hidden=true;
-  drawMsg(); render();
-}
-function exFinish(){
-  ex.on=false; $("exbar").hidden=true;
-  const scored=ex.rows.filter(r=>r.match!==null);
-  const okN=scored.filter(r=>r.match).length;
-  const tw=ex.rows.reduce((s,r)=>s+r.words,0);
-  const tt=ex.rows.reduce((s,r)=>s+r.taps,0);
-  const secs=Math.round(ex.rows.reduce((s,r)=>s+r.ms,0)/1000);
-  const d=document.createElement("div"); d.className="exdone";
-  d.innerHTML="<b>ကျေးဇူးတင်ပါတယ် · thank you!</b><br>"+
-    ex.rows.length+" tasks · "+tw+" words · <b>"+(tw?(tt/tw).toFixed(2):"—")+
-    "</b> taps/word · "+okN+"/"+scored.length+" copied exactly · "+secs+"s<br>"+
-    "<span style='color:var(--dim)'>Your results are already sent. One last thing "+
-    "below — which words came out wrong?</span>";
-  $("thread").appendChild(d);
-  $("thread").scrollTop=$("thread").scrollHeight;
-  M.exercise=ex.rows;                 // rides along with the next beacon
+function testFinish(){
+  convo.mode=null;
+  const scored=convo.rows.filter(r=>r.match!==null&&!r.skipped);
+  const ok=scored.filter(r=>r.match).length;
+  const tw=convo.rows.reduce((s,r)=>s+r.words,0);
+  const tt=convo.rows.reduce((s,r)=>s+r.taps,0);
+  say("<b>ပြီးပါပြီ · that's all of them — thank you.</b><br>"+
+      convo.rows.length+" tasks · "+tw+" words · <b>"+(tw?(tt/tw).toFixed(2):"—")+
+      "</b> taps per word · "+ok+"/"+scored.length+" copied exactly.<br>"+
+      "<span class='dim'>Your results are already sent.</span>");
+  M.exercise=convo.rows;
   beacon({event:"exercise"});
-  /* don't make them navigate: land them on the comment box, focused, asking
-     the one question whose answer we cannot get any other way */
-  showTab("help");
-  const c=$("cmt");
-  if(c){
-    c.placeholder="ဘယ်စာလုံးတွေ မှားလဲ · which words came out wrong? "+
-                  "which spellings felt unnatural?";
-    setTimeout(()=>{c.scrollIntoView({block:"center"});c.focus()},240);
-  }
+  setTimeout(fbStart,1100);
 }
-/* ---- prompts, delivered as incoming messages ---- */
-const nudges=[];
-const seenKey="burmakey.seen", fbKey="burmakey.nudged";
-function store(k,v){try{v===undefined?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}
-function stored(k){try{return localStorage.getItem(k)}catch(e){return null}}
 
-function dropNudge(n){
-  const i=nudges.indexOf(n); if(i>=0)nudges.splice(i,1);
-  if(n.key)store(n.key,"1");
-  drawMsg();
+/* ---- the feedback questions, also a conversation ---- */
+const FB_Q=[
+ {k:"wrong",q:"နောက်ဆုံးမေးခွန်းလေးတွေ · a few last questions.<br>"+
+   "<b>ဘယ်စာလုံးတွေ မှားထွက်လဲ · which words came out wrong?</b><br>"+
+   "<span class='dim'>Type any you remember — using this keyboard, of course.</span>"},
+ {k:"spell",q:"<b>ဘယ် Burglish စာလုံးပေါင်းက မသဘာဝကျဘူးလဲ · which spellings felt "+
+   "unnatural to you?</b><br><span class='dim'>The way we expect you to spell "+
+   "things may not match how you actually do.</span>"},
+ {k:"use",q:"<b>ဒီကီးဘုတ်ကို သုံးမလား · would you use this?</b>",
+   acts:[{label:"👍 သုံးမယ်",v:1},{label:"👎 မသုံးဘူး",v:-1}]},
+];
+function fbStart(){
+  if(convo.mode)return;
+  store(fbKey,"1");
+  convo.mode="fb";convo.i=0;convo.answers=[];
+  askQ();
 }
-function nudgeEl(n){
-  const b=document.createElement("div");b.className="bub in";
-  const t=document.createElement("span");t.className="bt";t.innerHTML=n.html;
-  b.appendChild(t);
-  const a=document.createElement("div");a.className="act";
-  const go=document.createElement("button");go.textContent=n.cta;
-  /* acting on a prompt retires it: leaving it in the thread would nag someone
-     who already did the thing */
-  go.onclick=()=>{dropNudge(n);n.act()}; a.appendChild(go);
-  const no=document.createElement("button");no.className="ghost";
-  no.textContent="နောက်မှ · later";
-  no.onclick=()=>dropNudge(n);
-  a.appendChild(no); b.appendChild(a);
-  return b;
+function askQ(){
+  const q=FB_Q[convo.i];
+  const acts=(q.acts||[]).map(a=>({label:a.label,act:()=>{thumb(a.v);fbHeard(a.label,true)}}));
+  acts.push({label:"ကျော် · skip",ghost:true,act:()=>fbHeard("",true)});
+  say(q.q,acts);
 }
-function addWelcome(){
-  if(stored(seenKey)||location.hash.slice(1)==="test")return;
-  nudges.push({at:"top", key:seenKey, cta:"စတင်မည် · start it",
-    html:"<b>မင်္ဂလာပါ · welcome</b><br>Type Burglish below and tap the Burmese "+
-         "word you meant — that is the whole idea.<br><br>If you have 20 minutes, "+
-         "the <b>guided test</b> helps us far more than a quick try: it turns "+
-         "your session into a number we can check our simulation against, and "+
-         "it is the only way we learn how <i>you</i> spell Burglish.",
-    act:()=>{store(seenKey,"1");showTab("help");
-             setTimeout(()=>{const b=$("exgo");if(b)b.scrollIntoView({block:"center"})},150)}});
+function fbHeard(text,viaButton){
+  convo.answers.push({q:FB_Q[convo.i].k,a:text});
+  convo.i++;
+  if(convo.i>=FB_Q.length)return fbFinish();
+  setTimeout(askQ,viaButton?450:650);
 }
-function maybeFeedbackNudge(){
-  if(ex.on||stored(fbKey)||nudges.some(n=>n.at==="end"))return;
-  const mins=(Date.now()-M.start)/60000;
-  if(M.commits<15||mins<5)return;
-  nudges.push({at:"end", key:fbKey, cta:"မေးခွန်း ၂ ခု · two questions",
-    html:"<b>ခဏလောက် · got a minute?</b><br>You have typed "+M.commits+
-         " words. Which ones came out wrong, and which spellings felt "+
-         "unnatural? That is the part we cannot measure — only you can tell us.",
-    act:()=>{store(fbKey,"1");showTab("help");
-             const c=$("cmt");
-             if(c){c.placeholder="ဘယ်စာလုံးတွေ မှားလဲ · which words came out wrong?";
-                   setTimeout(()=>{c.scrollIntoView({block:"center"});c.focus()},200)}}});
-  drawMsg();
+function fbFinish(){
+  convo.mode=null;
+  M.answers=convo.answers;
+  beacon({event:"feedback",comment:convo.answers.map(a=>a.q+": "+a.a).join(" | ")});
+  say("<b>ကျေးဇူးအများကြီးတင်ပါတယ် · thank you, genuinely.</b><br>"+
+      "That is exactly what we could not get any other way. "+
+      "Keep typing as long as you like.");
 }
-setInterval(maybeFeedbackNudge,20000);
+
+/* ---- the 5-minute ask ---- */
+function maybeAsk(){
+  if(convo.mode||stored(fbKey))return;
+  if(M.commits<15||(Date.now()-M.start)/60000<5)return;
+  store(fbKey,"1");
+  say("<b>ခဏလောက် · got a minute?</b><br>You have typed "+M.commits+
+      " words. Could I ask two quick questions about how it went?",
+      [{label:"ရပါတယ် · sure",act:fbStart},
+       {label:"နောက်မှ · later",ghost:true,act:()=>say("ရပါတယ် · no problem.")}]);
+}
+setInterval(maybeAsk,20000);
 /* ---- tabs ---- */
 /* one header affordance, like a chat app: info opens the about pane and
    turns into a close button */
-const TABS=["chat","help","about"];
+const TABS=["chat","about"];
 function showTab(which,hash){
   if(!TABS.includes(which))which="chat";
   TABS.forEach(t=>{
@@ -867,7 +816,8 @@ function showTab(which,hash){
    so inviting someone is one URL instead of four taps to lose them in */
 function routeHash(){
   const h=(location.hash||"").slice(1);
-  if(h==="test"){ showTab("help",false); const b=$("exgo"); if(b)b.scrollIntoView(); }
+  if(h==="test"){ showTab("chat",false);
+    if(!convo.mode&&!msgs.length)setTimeout(testStart,500); }
   else if(h) showTab(h,false);
 }
 addEventListener("hashchange",routeHash);
@@ -904,10 +854,11 @@ addEventListener("hashchange",routeHash);
 /* Action buttons must not steal focus from the input on desktop either. */
 document.querySelectorAll(".composerow button").forEach(b=>
   b.addEventListener("pointerdown",e=>{if(e.pointerType==="mouse")e.preventDefault()}));
-addWelcome();
 drawMsg();
 render();
 routeHash();
+/* first visit: the app introduces itself and offers the test */
+if(!stored(seenKey)&&location.hash.slice(1)!=="test")setTimeout(testOffer,650);
 </script></body></html>'''
 open("try-burmese.html","w").write(html.replace("__DATA__", data))
 import os; print("wrote try-burmese.html", os.path.getsize("try-burmese.html"), "bytes")
