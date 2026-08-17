@@ -31,10 +31,12 @@ Zawgyi/Unicode split.
 - Head-to-head against Bagan (10M+ downloads, market leader), re-run with a
   **mobile cost model** — seconds per word on a modelled phone (Fitts's law
   from real key sizes and travel, a position-dependent scan for candidate
-  picks, mis-tap correction) rather than undifferentiated taps. Against Bagan
-  as it actually behaves, BurmaKey is **~38% faster** (27 → 44 wpm). Against a
+  picks, mis-tap correction) rather than undifferentiated taps, with the
+  competitor's layout geometry and its lack of word prediction **measured from
+  a real Bagan v14.62 install on an emulator**, not assumed. Against Bagan
+  as it actually behaves, BurmaKey is **~37% faster** (28 → 44 wpm). Against a
   hypothetical Bagan carrying this exact engine over script keys it is
-  **3–6% slower**, consistently across an 81-point sensitivity sweep — script
+  **4–7% slower**, consistently across an 81-point sensitivity sweep — script
   characters narrow the candidate list faster than Latin letters. Both
   corrections are less flattering than the earlier tap-count claims of −52%
   and "a statistical tie". **The engine, not the Latin input code, is the

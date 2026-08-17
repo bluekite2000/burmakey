@@ -5,4 +5,6 @@ try-burmese.html
 longrun_topics.json
 mm_data.pkl
 weblex_my.txt
+# competitor APKs pulled for benchmarking — not ours to redistribute
+apks/
 __pycache__/

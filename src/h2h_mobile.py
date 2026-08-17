@@ -2,12 +2,20 @@
 Head-to-head on a MOBILE keyboard, against the competitors people actually use.
 
 Why re-run it: the earlier head-to-head counted *taps*, and treated every tap
-as equal. On a phone they are not. A Burmese script layout packs ~11 columns
-into the same glass as a 26-key Latin layout, so its keys are smaller (slower
-and more error-prone under Fitts's law), and its overflow glyphs sit behind a
-layer switch that costs an extra tap. A candidate-bar pick is one tap but adds
-a visual scan and a long reach. Counting taps hides all four effects — two
-favour the competitor, two favour us.
+as equal. On a phone they are not. A Myanmar script layout puts its overflow
+glyphs behind a layer switch that costs an extra tap, and a candidate-bar pick
+is one tap but adds a visual scan and a long reach. Counting taps hides both.
+
+Layout geometry here is MEASURED, not guessed: Bagan Keyboard v14.62 was
+installed on an Android 14 emulator and driven directly. Its Myanmar Unicode
+layout is 10 columns x 4 letter rows — the same key width as a 26-key Latin
+layout, not narrower as first assumed. That earlier guess handed BurmaKey a
+Fitts advantage that does not exist.
+
+The same session established the arm's central assumption: typing real
+high-frequency word prefixes into Bagan produces NO word candidates, only the
+composing string echoed back for adding to a user dictionary. "As actually
+used" really is character-by-character entry.
 
 So this run costs each system in SECONDS PER WORD on a modelled phone:
 
@@ -97,9 +105,16 @@ def latin_layout():
     return lay
 
 
-def script_layout(freq_chars, cols=11, base_rows=4, order="alphabetical"):
+def script_layout(freq_chars, cols=10, base_rows=4, order="alphabetical"):
     """A Myanmar script layout: `cols` x `base_rows` of glyphs on the base
     layer, everything rarer behind a layer switch.
+
+    cols=10 is MEASURED, not assumed: Bagan Keyboard v14.62 was installed on an
+    Android 14 emulator and its Myanmar Unicode layout counted — 10 columns of
+    letter keys over 4 rows, with secondary glyphs on long-press. An earlier
+    guess of 11 made its keys narrower than the Latin layout's and handed us a
+    Fitts advantage that does not exist; at 10 columns both layouts have the
+    same key width.
 
     order="alphabetical" places the base glyphs in Unicode order, which is the
     traditional alphabet order that real Myanmar layouts (Myanmar3, Bagan)

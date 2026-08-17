@@ -102,15 +102,27 @@ to be rebuilt from its description. `src/h2h_mobile.py`.
 
 ### Second pass — seconds per word on a phone
 
-A tap is not a tap on a handset. Four effects the tap count hides, and they do
-not all favour us: (1) a Myanmar layout packs ~11 columns where Latin gets 10,
-so its keys are smaller — slower and more error-prone under Fitts's law;
-(2) overflow glyphs sit behind a layer switch, which turns out to be nearly
-irrelevant at 99.5% base-layer coverage; (3) a candidate-bar pick is one tap
-but adds a visual scan that grows with position, plus a long reach — both
-engine systems pay this on most words; (4) script characters carry more
-information per tap, so the script system reaches the right candidate in fewer
-keystrokes (2.33 vs 2.45).
+A tap is not a tap on a handset. Three effects the tap count hides, and they do
+not all favour us: (1) overflow glyphs sit behind a layer switch, which turns
+out to be nearly irrelevant at 99.5% base-layer coverage; (2) a candidate-bar
+pick is one tap but adds a visual scan that grows with position, plus a long
+reach — both engine systems pay this on most words; (3) script characters carry
+more information per tap, so the script system reaches the right candidate in
+fewer keystrokes (2.33 vs 2.45).
+
+**Geometry is measured, not assumed.** Bagan Keyboard v14.62 was installed on
+an Android 14 emulator and driven directly (`src/h2h_mobile.py` docstring).
+Its Myanmar Unicode layout is 10 columns x 4 letter rows — the SAME key width
+as a 26-key Latin layout, not narrower as first guessed. That earlier guess
+handed BurmaKey a Fitts advantage that does not exist, and correcting it moved
+every headline against us.
+
+**The arm's central assumption is now observed.** Typing real high-frequency
+word prefixes into Bagan (e.g. the start of သည်) produces NO word candidates —
+only the composing string echoed back as an "add to user dictionary"
+affordance. "Bagan as actually used" really is character-by-character entry.
+Caveats: default configuration, Unicode mode, fresh install, emulator;
+TTKeyboard and Zawgyi mode were not tested.
 
 Costing every action in seconds — Fitts's law from real key sizes and the
 actual key-to-key travel of the typed sequence, a position-dependent scan for
@@ -118,21 +130,21 @@ candidate picks, and notice + backspace + retap for mis-taps:
 
 | s/word | chat | essay | chat wpm |
 |---|---|---|---|
-| Bagan as actually used | 2.22 | 2.32 | 27.1 |
-| Bagan + ideal engine (does not exist) | 1.30 | 1.38 | 46.3 |
-| Bagan + ideal engine + ideal key placement | 1.25 | 1.35 | 48.1 |
+| Bagan as actually used | 2.18 | 2.28 | 27.6 |
+| Bagan + ideal engine (does not exist) | 1.29 | 1.38 | 46.5 |
+| Bagan + ideal engine + ideal key placement | 1.26 | 1.34 | 47.8 |
 | Draft 4 / BurmaKey | 1.36 | 1.44 | 44.1 |
 
 **This corrects two earlier claims.** (1) Against Bagan as it exists, the gain
-is **~38%, not ~50%** — a candidate pick costs a scan that a tap count treats
+is **~37%, not ~50%** — a candidate pick costs a scan that a tap count treats
 as free. (2) Against a hypothetical Bagan carrying our exact engine, it is
-**not a "statistical tie": BurmaKey is consistently 3-6% slower**, in all 81
+**not a "statistical tie": BurmaKey is consistently 4-7% slower**, in all 81
 parameter combinations swept. Script characters narrow the candidate list
 faster than Latin letters, and bigger Latin keys do not quite buy that back.
 
 Sensitivity sweep (81 combinations of Fitts b, scan base, scan-per-slot, error
-rate): vs Bagan-as-used −45.5%…−23.6% (chat), −44.6%…−23.7% (essay); vs
-Bagan+engine +3.6%…+6.2% (chat), +3.0%…+5.1% (essay). Both signs are stable
+rate): vs Bagan-as-used −44.2%…−22.4% (chat), −43.3%…−22.6% (essay); vs
+Bagan+engine +4.4%…+6.6% (chat), +3.6%…+5.4% (essay). Both signs are stable
 across the entire sweep; the magnitudes are not. The per-action constants are
 literature-shaped assumptions, not measurements of Myanmar users.
 

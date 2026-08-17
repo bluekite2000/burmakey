@@ -398,9 +398,10 @@ every tap counted the same.</p>
 <p>Counting taps hides four things that matter on a handset, and they do not
 all point the same way:</p>
 <ul>
-<li>A Myanmar script layout packs about <b>11 columns</b> into the same glass
-that a Latin layout gives <b>10</b>, so its keys are smaller — slower to hit
-and missed more often, by Fitts&rsquo;s law. <i>Favours BurmaKey.</i></li>
+<li><b>Key size is a wash, not an advantage.</b> Bagan&rsquo;s Myanmar layout
+was measured on a real install: <b>10 columns × 4 letter rows</b>, the same key
+width as a 26-key Latin layout. An earlier guess of 11 columns handed BurmaKey
+a Fitts advantage that does not exist. <i>Favours neither.</i></li>
 <li>Glyphs that do not fit the base layer sit behind a <b>layer switch</b>
 costing an extra tap. In practice this barely matters: a 40-key base layer
 already covers <b>99.5%</b> of real keystrokes. <i>Nearly neutral.</i></li>
@@ -421,8 +422,8 @@ backspace and retap.</p>
 <figure class="chart">
 <figcaption>Seconds per word on a modelled phone</figcaption>
 <p class="csub">Lower is better. 360pt portrait handset; centre-of-range
-constants. The ordering below is stable across all 81 combinations of the
-sensitivity sweep — see the caveat that follows.</p>
+constants, and layout geometry measured from a real Bagan install. The ordering
+is stable across all 81 combinations of the sensitivity sweep.</p>
 
 <div class="legend">
   <span style="--c:var(--series-2)"><i></i>Bagan as actually used</span>
@@ -436,11 +437,11 @@ sensitivity sweep — see the caveat that follows.</p>
   <div class="group">
   <p class="gtitle">Chat — messages of 8 words or fewer</p>
     <div class="brow" tabindex="0">
-      <span class="blab">Bagan as actually used <em>27 wpm</em></span>
+      <span class="blab">Bagan as actually used <em>28 wpm</em></span>
       <span class="bmeasure"><span class="bfill"
-        style="width:88.7%;--c:var(--series-2)"></span></span>
-      <span class="bval">2.22</span>
-      <span class="tip"><b>2.22 s/word · 27 wpm</b> — small keys, every glyph
+        style="width:87.0%;--c:var(--series-2)"></span></span>
+      <span class="bval">2.18</span>
+      <span class="tip"><b>2.18 s/word · 28 wpm</b> — small keys, every glyph
       typed, no useful prediction.</span>
     </div>
     <div class="brow" tabindex="0">
@@ -456,7 +457,7 @@ sensitivity sweep — see the caveat that follows.</p>
       <span class="bmeasure"><span class="bfill"
         style="width:54.4%;--c:var(--series-1)"></span></span>
       <span class="bval">1.36</span>
-      <span class="tip"><b>1.36 s/word · 44 wpm</b> — 39% faster than Bagan as
+      <span class="tip"><b>1.36 s/word · 44 wpm</b> — 37% faster than Bagan as
       it exists, but about 5% slower than the hypothetical.</span>
     </div>
   </div>
@@ -466,9 +467,9 @@ sensitivity sweep — see the caveat that follows.</p>
     <div class="brow" tabindex="0">
       <span class="blab">Bagan as actually used</span>
       <span class="bmeasure"><span class="bfill"
-        style="width:92.6%;--c:var(--series-2)"></span></span>
-      <span class="bval">2.32</span>
-      <span class="tip"><b>2.32 s/word</b> — longer words, same slow
+        style="width:91.0%;--c:var(--series-2)"></span></span>
+      <span class="bval">2.28</span>
+      <span class="tip"><b>2.28 s/word</b> — longer words, same slow
       entry.</span>
     </div>
     <div class="brow" tabindex="0">
@@ -483,7 +484,7 @@ sensitivity sweep — see the caveat that follows.</p>
       <span class="bmeasure"><span class="bfill"
         style="width:57.4%;--c:var(--series-1)"></span></span>
       <span class="bval">1.44</span>
-      <span class="tip"><b>1.44 s/word</b> — 38% faster than Bagan as it
+      <span class="tip"><b>1.44 s/word</b> — 37% faster than Bagan as it
       exists, about 4% slower than the hypothetical.</span>
     </div>
   </div>
@@ -495,28 +496,28 @@ sensitivity sweep — see the caveat that follows.</p>
 <table>
 <thead><tr><th>System</th><th>Chat s/word</th><th>Essay s/word</th><th>Chat wpm</th></tr></thead>
 <tbody>
-<tr><td>Bagan / TTKeyboard as actually used</td><td>2.22</td><td>2.32</td><td>27.1</td></tr>
+<tr><td>Bagan / TTKeyboard as actually used</td><td>2.18</td><td>2.28</td><td>27.6</td></tr>
 <tr><td>Bagan + our engine (does not exist)</td><td>1.30</td><td>1.38</td><td>46.3</td></tr>
 <tr><td>Bagan + our engine + ideal key placement</td><td>1.25</td><td>1.35</td><td>48.1</td></tr>
 <tr><td>BurmaKey (Burglish in, script out)</td><td>1.36</td><td>1.44</td><td>44.1</td></tr>
-<tr><td>BurmaKey vs Bagan as used — sweep range</td><td>−45.5% … −23.6%</td><td>−44.6% … −23.7%</td><td>—</td></tr>
-<tr><td>BurmaKey vs Bagan + engine — sweep range</td><td>+3.6% … +6.2%</td><td>+3.0% … +5.1%</td><td>—</td></tr>
+<tr><td>BurmaKey vs Bagan as used — sweep range</td><td>−44.2% … −22.4%</td><td>−43.3% … −22.6%</td><td>—</td></tr>
+<tr><td>BurmaKey vs Bagan + engine — sweep range</td><td>+4.4% … +6.6%</td><td>+3.6% … +5.4%</td><td>—</td></tr>
 </tbody></table></div></details>
 </figure>
 
 <div class="callout">
 <p><b>The phone model is less flattering than the tap count, and it corrects
 two earlier claims.</b> Against Bagan as it actually exists, BurmaKey is
-<b>about 38% faster</b>, not the ~50% the tap count implied — because a
+<b>about 37% faster</b>, not the ~50% the tap count implied — because a
 candidate pick costs a scan that a tap count treats as free. Against a
 hypothetical Bagan carrying this exact engine, BurmaKey is not the
 &ldquo;statistical tie&rdquo; reported earlier: it is consistently
-<b>3–6% slower</b>, in every one of the 81 parameter combinations tested.
+<b>4–7% slower</b>, in every one of the 81 parameter combinations tested.
 Script characters simply narrow the candidate list faster than Latin letters,
 and bigger Latin keys do not quite buy that back.</p>
 <p>Both conclusions are robust in <i>sign</i> across the whole sweep, but the
-magnitudes move a lot — the advantage over real competitors ranges from −24%
-to −46% depending on how expensive you believe a visual scan is. Treat the
+magnitudes move a lot — the advantage over real competitors ranges from −22%
+to −44% depending on how expensive you believe a visual scan is. Treat the
 direction as the finding and the size as an estimate.</p>
 <p><b>What survives is the original point, sharpened: the engine is the
 product.</b> The measured advantage comes almost entirely from prediction, not
