@@ -55,10 +55,6 @@ display:flex;align-items:center;justify-content:center}
 .hicons button:active{background:rgba(255,255,255,.08)}
 .hicons button[aria-expanded=true]{color:var(--acc)}
 
-.hmenu{flex:0 0 auto;width:44px;height:44px;min-height:44px;padding:0;
-background:none;border:0;color:var(--ink);font-size:21px;line-height:1;
-border-radius:50%;margin-right:-8px;cursor:pointer}
-.hmenu:active{background:rgba(255,255,255,.08)}
 /* ---------- top-level tabs (removed; kept for the .pane rules below) ---------- */
 .tabs{flex:0 0 auto;display:flex;background:var(--head);
 border-bottom:1px solid var(--ln);padding:0 4px}
@@ -246,8 +242,6 @@ a{color:#53bdeb}
   <b>မြန်မာစာရိုက်</b>
   <span id="presence">Burglish ရိုက် · မြန်မာစာ ထွက်</span>
  </div>
- <button class="hmenu" id="menubtn" onclick="menu()"
-  aria-label="ရွေးချယ်စရာများ · options">⋮</button>
 </div>
 
 
@@ -16883,18 +16877,19 @@ function convoHeard(text){
 function askSharingThenTest(){
   /* answering starts the test straight away — the sharing answer is the
      consent it needed, and every task carries a way out */
-  const after=()=>setTimeout(()=>{store(seenKey,"1");testStart()},900);
-  say("<b>မျှဝေမှု · sharing</b><br>I send numbers only — taps per word, how "+
-      "often the first suggestion was right. Never your words, unless you say "+
-      "so:<br><span class='dim'>• words the keyboard did not know — those exact "+
-      "words only<br>• the words you typed and chose, in order, to improve the "+
-      "dictionary</span><br><br>Then I will walk you through 18 short tasks — "+
-      "you can stop at any point.",[
-    {label:"နှစ်ခုလုံး · both",act:()=>{opt.oov=true;opt.donate=true;
+  const after=()=>setTimeout(testStart,900);
+  say("<b>မျှဝေမှု · sharing</b><br>"+
+      "သင့်စာသားများ ဖုန်းထဲမှာပဲ ရှိပါမယ် · Your words stay on your phone. "+
+      "I only send numbers.<br><br>"+
+      "အဘိဓာန် ပိုကောင်းအောင် သင်ရိုက်သည်များကို မျှဝေမလား · "+
+      "May I also send what you type, to improve the dictionary?<br><br>"+
+      "<span class='dim'>ပြီးရင် အလုပ်ငယ် ၁၈ ခု · then 18 short tasks. "+
+      "Stop any time.</span>",[
+    {label:"ဟုတ်ကဲ့ · yes",act:()=>{opt.oov=true;opt.donate=true;
       say("ကျေးဇူးပါ · thank you.");after()}},
-    {label:"မသိသောစာလုံးများသာ · unknown only",ghost:true,
+    {label:"မသိသည့်စာလုံးများသာ · unknown words only",ghost:true,
       act:()=>{opt.oov=true;say("ရပါတယ် · noted.");after()}},
-    {label:"ဂဏန်းများသာ · numbers only",ghost:true,
+    {label:"မဟုတ်ပါ · numbers only",ghost:true,
       act:()=>{say("ရပါတယ် · numbers only.");after()}}]);
 }
 function testOffer(){
@@ -16909,7 +16904,6 @@ function testOffer(){
           say("ရပါတယ် · no problem — just type whenever you like.")}}]);
 }
 function testStart(){
-  store(seenKey,"1");
   convo.mode="test";convo.i=0;convo.rows=[];
   say("ကောင်းပြီ · great. I will give you one at a time.");
   setTimeout(askItem,700);
@@ -16944,13 +16938,13 @@ function testHeard(produced,skipped){
   setTimeout(askItem,650);
 }
 function testStop(){
-  convo.mode=null;
+  convo.mode=null;store(seenKey,"1");
   if(convo.rows.length){M.exercise=convo.rows;beacon({event:"exercise"})}
   say("ရပါတယ် · stopped — thank you for the "+convo.rows.length+
       " you did. Type whatever you like now.");
 }
 function testFinish(){
-  convo.mode=null;
+  convo.mode=null;store(seenKey,"1");
   const scored=convo.rows.filter(r=>r.match!==null&&!r.skipped);
   const ok=scored.filter(r=>r.match).length;
   const tw=convo.rows.reduce((s,r)=>s+r.words,0);
@@ -17026,39 +17020,6 @@ addEventListener("hashchange",routeHash);
 /* settings are state, not checkboxes — the consent question sets them */
 const opt={showrom:false,oov:false,donate:false};
 
-/* the header ⋮ does not open a screen: it makes the app say the menu */
-function menu(){
-  say("<b>ရွေးချယ်စရာများ · options</b>",[
-    {label:"လေ့ကျင့်ခန်း · guided test",act:testOffer},
-    {label:"မျှဝေမှု · sharing",ghost:true,act:askSharing},
-    {label:"ခလုတ်များ · the keys",ghost:true,act:sayKeys},
-    {label:"ကိုယ်ရေး · privacy",ghost:true,
-     act:()=>say("ကိုယ်ရေးကိုယ်တာ အပြည့်အစုံ · the full privacy note is on the "+
-       "<a href='../' style='color:#8ecdf7'>home page</a>.")}]);
-}
-function sayKeys(){
-  say("<b>ခလုတ်များ · the keys</b><br>You use your phone's own keyboard — "+
-      "there is no new layout to learn.<br><br>"+
-      "<b>space</b> — takes the highlighted word<br>"+
-      "<b>backspace</b> — deletes the last word once the box is empty<br>"+
-      "<b>enter</b> — sends<br><b>123</b> — offers ၀-၉ or 0-9<br>"+
-      "<b>. ,</b> — offers ။ and ၊, also always on the strip<br>"+
-      "<b>space twice</b> — a real space, for mixing English in");
-}
-function askSharing(){
-  say("<b>မျှဝေမှု · sharing</b><br>By default I only send numbers, never your "+
-      "words. Two things you can add, if you want to:<br>"+
-      "<span class='dim'>• words the keyboard did not know — those exact words "+
-      "only<br>• the words you typed and chose, in order, to improve the "+
-      "dictionary</span>",[
-    {label:"နှစ်ခုလုံး · both",act:()=>{opt.oov=true;opt.donate=true;
-      say("ကျေးဇူးပါ · thank you — that helps the dictionary most.")}},
-    {label:"မသိသောစာလုံးများသာ · unknown words only",ghost:true,
-      act:()=>{opt.oov=true;opt.donate=false;say("ရပါတယ် · noted.")}},
-    {label:"ဂဏန်းများသာ · numbers only",ghost:true,
-      act:()=>{opt.oov=false;opt.donate=false;
-      say("ရပါတယ် · numbers only. Nothing you type leaves your phone.")}}]);
-}
 /* ---- keep the app sized to what the OS keyboard leaves us ----
    iOS Safari does not shrink the layout viewport when the keyboard opens, so
    without this the bottom of the app hides behind it. visualViewport reports
