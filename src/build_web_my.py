@@ -3,121 +3,146 @@ data = open("weblex_my.txt").read()
 html = r'''<!DOCTYPE html><html lang="my"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <title>မြန်မာစာရိုက် — type Burmese with English letters</title><style>
-:root{--bg:#0f1115;--pan:#171a21;--ln:#252a34;--ink:#e6e9ef;--dim:#8b93a3;
---acc:#6ea8fe;--good:#6fcf97;
---kb:0px}   /* height the OS keyboard covers, set from visualViewport */
+:root{
+--bg:#0b141a;          /* thread */
+--head:#202c33;        /* chat header + compose bar */
+--pill:#2a3942;        /* input pill */
+--out:#005c4b;         /* outgoing bubble */
+--in:#202c33;          /* incoming bubble */
+--ink:#e9edef; --dim:#8696a0; --ln:#2f3b43;
+--acc:#00a884;         /* send green */
+--tick:#53bdeb;        /* read ticks */
+--kb:0px}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);
-font:16px/1.6 "Noto Sans Myanmar","Myanmar MN","Pyidaungsu",ui-sans-serif,system-ui,sans-serif;
+font:16px/1.55 "Noto Sans Myanmar","Myanmar MN","Pyidaungsu",ui-sans-serif,system-ui,sans-serif;
 height:100vh;height:100dvh;overflow:hidden;
 overscroll-behavior:none;touch-action:manipulation;
 -webkit-tap-highlight-color:transparent}
-
-/* app shell: a flex column sized to whatever the keyboard leaves us */
 .app{width:100%;max-width:560px;margin:0 auto;
 height:100vh;height:100dvh;height:calc(100dvh - var(--kb));
-display:flex;flex-direction:column;
-padding-left:max(12px,env(safe-area-inset-left));
-padding-right:max(12px,env(safe-area-inset-right));
+display:flex;flex-direction:column;background:var(--bg);
 transition:height .14s ease-out}
 @media(prefers-reduced-motion:reduce){.app{transition:none}}
 
-.topbar{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:9px 2px 7px}
-h1{font-size:16.5px;margin:0;font-weight:600;flex:1 1 auto;min-width:0;
+/* ---------- chat header ---------- */
+.topbar{flex:0 0 auto;display:flex;align-items:center;gap:11px;
+background:var(--head);padding:8px 10px;
+padding-top:calc(8px + env(safe-area-inset-top))}
+.avatar{flex:0 0 auto;width:40px;height:40px;border-radius:50%;
+background:linear-gradient(145deg,#0b8f74,#046b56);color:#e9edef;
+display:flex;align-items:center;justify-content:center;font-size:19px}
+.who{flex:1 1 auto;min-width:0}
+.who b{display:block;font-size:16px;font-weight:600;line-height:1.3;
 white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tabs{display:flex;gap:3px;background:var(--pan);border:1px solid var(--ln);
-border-radius:12px;padding:3px;flex:0 0 auto}
-.tabs button{background:none;border:0;color:var(--dim);font:13px inherit;
-padding:6px 11px;border-radius:9px;min-height:38px;cursor:pointer;
-touch-action:manipulation;-webkit-tap-highlight-color:transparent;
--webkit-user-select:none;user-select:none;white-space:nowrap}
-.tabs button[aria-selected=true]{background:var(--acc);color:#08101c;font-weight:600}
-.tabs button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.who span{display:block;font-size:12.5px;color:var(--dim);line-height:1.3;
+white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hicons{flex:0 0 auto;display:flex;gap:2px}
+.hicons button{background:none;border:0;color:var(--ink);font-size:18px;
+width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;
+display:flex;align-items:center;justify-content:center}
+.hicons button:active{background:rgba(255,255,255,.08)}
+.hicons button[aria-expanded=true]{color:var(--acc)}
 
-.pane{flex:1 1 auto;min-height:0;padding-bottom:max(8px,env(safe-area-inset-bottom))}
-/* must outrank the #id display rules below, or a hidden pane stays laid out
-   and silently swallows taps meant for the keyboard */
+.pane{flex:1 1 auto;min-height:0}
 [hidden]{display:none!important}
-#pane-type{display:flex;flex-direction:column;gap:9px}
-#pane-more{overflow-y:auto;-webkit-overflow-scrolling:touch;
-overscroll-behavior-y:contain;display:flex;flex-direction:column;gap:12px}
 
-/* ---- the message IS the screen ---- */
-.msgwrap{flex:1 1 auto;min-height:96px;position:relative;display:flex}
-.msg{flex:1 1 auto;min-width:0;overflow-y:auto;overscroll-behavior:contain;
--webkit-overflow-scrolling:touch;
-background:var(--pan);border:1px solid var(--ln);border-radius:16px;
-padding:16px 15px;font-size:23px;line-height:1.95;word-break:break-word;
--webkit-user-select:text;user-select:text}
-.msg:empty{display:flex;align-items:center;justify-content:center;text-align:center}
-.msg:empty::before{content:"သင့်စာသား ဒီမှာပေါ်မယ်\A your message appears here";
-white-space:pre-line;color:#464f60;font-size:15px;line-height:1.7}
-.msg .rom{display:block;font-size:12px;color:#7ea7d8;
-font-family:ui-monospace,Menlo,monospace;margin-top:8px;word-break:break-all}
-/* undo / clear ride on the message, revealed only when there is something
-   to act on, so they cost no layout height and never cover the placeholder */
-.msgacts{position:absolute;top:8px;right:8px;display:flex;gap:6px;
-opacity:0;visibility:hidden;transition:opacity .12s}
-.msgwrap.has .msgacts{opacity:1;visibility:visible}
-.msgacts .ico{flex:0 0 auto;width:44px;height:44px;min-height:44px;padding:0;
-font-size:16px;border-radius:11px;background:rgba(13,16,21,.94);
--webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+/* ---------- thread ---------- */
+#pane-type{display:flex;flex-direction:column}
+.thread{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+overscroll-behavior-y:contain;padding:12px 9px 6px;
+display:flex;flex-direction:column;gap:5px;
+/* the doodle wallpaper, as a repeating tint rather than an image */
+background-color:var(--bg);
+background-image:
+ radial-gradient(circle at 18% 22%,rgba(255,255,255,.016) 0 8px,transparent 9px),
+ radial-gradient(circle at 72% 58%,rgba(255,255,255,.012) 0 11px,transparent 12px),
+ radial-gradient(circle at 44% 84%,rgba(255,255,255,.011) 0 6px,transparent 7px),
+ radial-gradient(circle at 88% 12%,rgba(255,255,255,.010) 0 5px,transparent 6px);
+background-size:150px 150px,190px 190px,120px 120px,95px 95px}
+.daypill{align-self:center;background:#1d282f;color:var(--dim);font-size:12px;
+padding:5px 13px;border-radius:9px;margin:2px 0 8px;box-shadow:0 1px 1px rgba(0,0,0,.25)}
+.empty{margin:auto;text-align:center;color:#5d6b73;font-size:14px;line-height:1.7;
+padding:20px;max-width:300px}
+.empty b{display:block;color:#7c8b93;font-size:15px;margin-bottom:5px}
 
-/* ---- compose row + suggestion strip ---- */
-.composer{flex:0 0 auto;display:flex;flex-direction:column;gap:8px}
-.composerow{display:flex;gap:8px;align-items:center}
-.composerow input{flex:1 1 auto;min-width:0}
-input[type=text]{width:100%;background:var(--pan);border:1px solid var(--acc);
-border-radius:13px;color:var(--acc);font:18px ui-monospace,Menlo,monospace;
-padding:14px;min-height:54px;outline:none;-webkit-appearance:none;appearance:none}
-input::placeholder{color:#3d4757;font-family:inherit}
-.send{flex:0 0 54px;width:54px;height:54px;min-height:54px;padding:0;
-border-radius:50%;font-size:21px;background:var(--acc);color:#08101c;
-border-color:var(--acc);font-weight:600;display:flex;
-align-items:center;justify-content:center}
-.send:active{background:#4b8ae0;border-color:#4b8ae0}
+.bub{position:relative;max-width:82%;padding:7px 10px 5px;border-radius:8px;
+box-shadow:0 1px 1px rgba(0,0,0,.28);word-break:break-word;font-size:16.5px;
+line-height:1.5}
+.bub.out{align-self:flex-end;background:var(--out);border-top-right-radius:2px}
+.bub .bt{display:block;font-size:19px;line-height:1.75}
+.bub .rom{display:block;font-size:11.5px;color:#9fd8c8;
+font-family:ui-monospace,Menlo,monospace;margin-top:3px;word-break:break-all}
+.bub .meta{display:block;text-align:right;font-size:11px;color:#8fb9ad;
+margin-top:1px;line-height:1.4}
+.bub .ck{color:var(--tick);letter-spacing:-2px;margin-left:2px}
+.bub.draft{background:#0c4b3f;border:1px dashed #1c7963;opacity:.97}
+.bub.draft .meta{color:#7fae9f}
+.bub.copied::after{content:"✓ ကူးပြီး · copied";position:absolute;right:0;
+bottom:-19px;font-size:11px;color:var(--acc);white-space:nowrap}
+@media(hover:hover){.bub.out{cursor:pointer}}
 
-.bar{display:flex;gap:7px;align-items:stretch;min-height:62px;padding:1px 0 0;
-overflow-x:auto;overflow-y:hidden;
-overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
-scroll-snap-type:x proximity;scrollbar-width:none}
+/* ---------- compose bar ---------- */
+.composer{flex:0 0 auto;background:var(--head);
+padding:7px 8px calc(6px + max(2px,env(safe-area-inset-bottom)))}
+.composerow{display:flex;gap:7px;align-items:flex-end}
+.pillwrap{flex:1 1 auto;min-width:0;display:flex;align-items:center;
+background:var(--pill);border-radius:24px;padding:0 6px 0 4px}
+.pillwrap .ico{flex:0 0 auto;background:none;border:0;color:var(--dim);
+width:40px;height:44px;min-height:44px;padding:0;font-size:17px;border-radius:50%;
+display:flex;align-items:center;justify-content:center}
+.pillwrap .ico:active{background:rgba(255,255,255,.07)}
+input[type=text]{flex:1 1 auto;min-width:0;width:100%;background:none;border:0;
+color:var(--ink);font:17px ui-monospace,Menlo,monospace;
+padding:12px 4px;min-height:46px;outline:none;-webkit-appearance:none;appearance:none}
+input::placeholder{color:#7b8a93;font-family:inherit}
+.send{flex:0 0 46px;width:46px;height:46px;min-height:46px;padding:0;border:0;
+border-radius:50%;font-size:19px;background:var(--acc);color:#06231c;
+display:flex;align-items:center;justify-content:center}
+.send:active{background:#019476}
+.send[disabled]{opacity:.45}
+
+/* ---------- suggestion strip, tight against the keyboard ---------- */
+.bar{display:flex;gap:6px;align-items:stretch;min-height:56px;
+margin-top:7px;padding:1px 0 0;
+overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;
+-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;scrollbar-width:none}
 .bar::-webkit-scrollbar{display:none}
-.cd{flex:0 0 auto;background:var(--pan);border:1px solid var(--ln);
-border-radius:12px;padding:6px 14px;text-align:center;cursor:pointer;
-min-height:56px;min-width:62px;
+.cd{flex:0 0 auto;background:var(--pill);border:1px solid transparent;
+border-radius:18px;padding:5px 15px;text-align:center;cursor:pointer;
+min-height:52px;min-width:60px;
 display:flex;flex-direction:column;align-items:center;justify-content:center;
 scroll-snap-align:start;touch-action:manipulation;
 -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
--webkit-tap-highlight-color:transparent;
 transition:transform .07s ease-out,background .07s ease-out}
 @media(prefers-reduced-motion:reduce){.cd{transition:none}}
-.cd:active{background:var(--acc);border-color:var(--acc);transform:scale(.95)}
-.cd:active .lo,.cd:active .rm{color:#08101c}
+.cd:active{background:var(--acc);transform:scale(.95)}
+.cd:active .lo,.cd:active .rm{color:#06231c}
 .cd:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-@media(hover:hover){.cd:hover{border-color:#39445a}}
-.cd .lo{font-size:19px;display:block;line-height:1.6}
-.cd .rm{font-size:10px;color:var(--dim);display:block;
+.cd .lo{font-size:18px;display:block;line-height:1.6}
+.cd .rm{font-size:9.5px;color:var(--dim);display:block;
 font-family:ui-monospace,Menlo,monospace}
-.cd.raw .lo{font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--dim)}
-.hint{color:#454d5c;font-size:13px;align-self:center;padding-left:4px}
+.cd.raw .lo{font-family:ui-monospace,Menlo,monospace;font-size:14px;color:var(--dim)}
+.hint{color:#5d6b73;font-size:13px;align-self:center;padding-left:8px}
 
-button{background:var(--pan);border:1px solid var(--ln);color:var(--ink);
+/* ---------- More pane ---------- */
+#pane-more{overflow-y:auto;-webkit-overflow-scrolling:touch;
+overscroll-behavior-y:contain;display:flex;flex-direction:column;gap:12px;
+padding:14px 14px calc(16px + env(safe-area-inset-bottom))}
+button{background:var(--pill);border:1px solid var(--ln);color:var(--ink);
 border-radius:11px;padding:10px 8px;font-size:14px;cursor:pointer;font-family:inherit;
 min-height:44px;line-height:1.25;touch-action:manipulation;
--webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
-button:active{background:var(--ln)}
+-webkit-user-select:none;user-select:none}
 button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 button[disabled]{opacity:.35;pointer-events:none}
-button.pri{background:var(--acc);color:#08101c;border-color:var(--acc);font-weight:600}
-
-/* ---- More pane ---- */
+button.pri{background:var(--acc);color:#06231c;border-color:var(--acc);font-weight:600}
 .sub{color:var(--dim);font-size:13.5px;margin:0}
 .stats{font-size:11.5px;color:var(--dim);font-family:ui-monospace,Menlo,monospace}
-.fb{background:var(--pan);border:1px solid var(--ln);border-radius:14px;
+.fb{background:var(--head);border:1px solid var(--ln);border-radius:14px;
 padding:13px 14px;display:flex;flex-direction:column;gap:9px}
 .fb h2{font-size:14px;margin:0}
-.fb textarea{background:#12151b;border:1px solid var(--ln);border-radius:9px;
+.fb textarea{background:#121d24;border:1px solid var(--ln);border-radius:9px;
 color:var(--ink);font:16px inherit;padding:10px;min-height:56px;resize:vertical;
 -webkit-appearance:none;appearance:none}
 .fb .thumbs{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -130,9 +155,9 @@ padding:4px 0;min-height:32px}
 label input[type=checkbox]{width:20px;height:20px;flex:0 0 auto;margin:1px 0 0;
 accent-color:var(--acc)}
 .foot{color:var(--dim);font-size:12.5px;line-height:1.7;border-top:1px solid var(--ln);
-padding-top:12px;padding-bottom:8px}
+padding-top:12px}
 .foot b{color:var(--ink)}
-a{color:var(--acc)}
+a{color:#53bdeb}
 </style></head><body>
 <form name="analytics" netlify netlify-honeypot="bot-field" hidden>
   <input name="site"><input name="event"><textarea name="comment"></textarea>
@@ -140,38 +165,39 @@ a{color:var(--acc)}
 </form><div class="app">
 
 <div class="topbar">
- <h1>မြန်မာစာရိုက်</h1>
- <div class="tabs" role="tablist" aria-label="ရိုက်ရန် သို့ အချက်အလက် · type or info">
-  <button role="tab" id="tab-type" aria-selected="true" aria-controls="pane-type"
-   aria-label="ရိုက်ရန် · Type" onclick="showTab('type')">ရိုက်ရန်</button>
-  <button role="tab" id="tab-more" aria-selected="false" aria-controls="pane-more"
-   aria-label="အချက်အလက် · More" onclick="showTab('more')">အချက်အလက်</button>
+ <div class="avatar" aria-hidden="true">မ</div>
+ <div class="who">
+  <b>မြန်မာစာရိုက်</b>
+  <span id="presence">Burglish ရိုက် · မြန်မာစာ ထွက်</span>
+ </div>
+ <div class="hicons">
+  <button id="infobtn" aria-expanded="false" aria-controls="pane-more"
+   aria-label="အချက်အလက် · about, privacy and feedback"
+   onclick="toggleMore()">&#9432;</button>
  </div>
 </div>
 
-<section class="pane" id="pane-type" role="tabpanel" aria-labelledby="tab-type">
- <div class="msgwrap" id="msgwrap">
-  <div class="msg" id="msg"></div>
-  <div class="msgacts">
-   <button class="ico" id="undobtn" onclick="undo()"
-    aria-label="ပြန်ဖျက် · undo last word" title="ပြန်ဖျက် · undo">↩</button>
-   <button class="ico" id="clrbtn" onclick="clearAll()"
-    aria-label="ရှင်း · clear the whole message" title="ရှင်း · clear">✕</button>
-  </div>
- </div>
+<section class="pane" id="pane-type">
+ <div class="thread" id="thread" aria-live="polite"></div>
  <div class="composer">
   <div class="composerow">
-   <input type="text" id="inp" autocomplete="off" autocorrect="off"
-    autocapitalize="none" spellcheck="false" inputmode="text" enterkeyhint="next"
-    placeholder="ဒီမှာရိုက်ပါ · type here (a-z)">
-   <button class="send" id="cpy" onclick="copyMsg()"
-    aria-label="ကူးယူ · copy the message">⧉</button>
+   <div class="pillwrap">
+    <button class="ico" id="undobtn" onclick="undo()"
+     aria-label="ပြန်ဖျက် · undo last word" title="ပြန်ဖျက် · undo">↩</button>
+    <input type="text" id="inp" autocomplete="off" autocorrect="off"
+     autocapitalize="none" spellcheck="false" inputmode="text" enterkeyhint="send"
+     placeholder="စာရိုက်ပါ · message">
+    <button class="ico" id="clrbtn" onclick="clearAll()"
+     aria-label="ရှင်း · clear the draft" title="ရှင်း · clear">✕</button>
+   </div>
+   <button class="send" id="sendmsg" onclick="sendMsg()"
+    aria-label="ပို့မည် · send and copy">➤</button>
   </div>
   <div class="bar" id="bar"><span class="hint">စရိုက်ပါ — try: nay kaung la</span></div>
  </div>
 </section>
 
-<section class="pane" id="pane-more" role="tabpanel" aria-labelledby="tab-more" hidden>
+<section class="pane" id="pane-more" hidden>
 <p class="sub">Burglish ရိုက်နေကျအတိုင်း ရိုက်ပါ — အသံထွက်အတိုင်း — မှန်တဲ့စာလုံးကို နှိပ်ပါ
 · type Burglish the way it sounds, tap the right word, get real Burmese</p>
 
@@ -200,7 +226,9 @@ order. Off by default. Tap to preview exactly what would be sent.</label>
 A keyboard idea for Burmese: type Burglish the way you already do in chat —
 no tones, no new spelling, no Myanmar layout to learn — and it writes real
 Burmese script (always clean Unicode, never Zawgyi-garbled). It learns your
-words during the session. Unknown words are kept exactly as you typed them.<br><br>
+words during the session. Unknown words are kept exactly as you typed them.
+Nothing is actually sent anywhere — "send" adds the message to this thread and
+copies it to your clipboard.<br><br>
 <b>Privacy:</b> everything runs in your browser; your message text is never
 sent. When you press "send feedback" (or automatically at session end, if
 analytics is configured), we receive <i>numbers only</i> — taps per word, how
@@ -398,35 +426,76 @@ function commit(i,raw,pos,zeroKey){
   }
   $("inp").value="";drawMsg();render();drawStats();$("inp").focus({preventScroll:true});
 }
+let sent=[];
+function msgText(){return words.map(w=>w.my).join(words.some(w=>w.raw)?" ":"")}
+function clockHM(){
+  const d=new Date();let h=d.getHours();const m=String(d.getMinutes()).padStart(2,"0");
+  const ap=h<12?"AM":"PM";h=h%12||12;return h+":"+m+" "+ap;
+}
+function bubble(text,rom,draft,time){
+  const b=document.createElement("div");
+  b.className="bub out"+(draft?" draft":"");
+  const t=document.createElement("span");t.className="bt";t.textContent=text;
+  b.appendChild(t);
+  if(rom){const r=document.createElement("span");r.className="rom";
+    r.textContent=rom;b.appendChild(r)}
+  const m=document.createElement("span");m.className="meta";
+  if(draft){m.textContent="ရေးဆွဲနေသည် · draft"}
+  else{m.innerHTML=time+' <span class="ck">✓✓</span>'}
+  b.appendChild(m);
+  return b;
+}
+/* the thread IS the message display: sent bubbles plus the live draft */
 function drawMsg(){
-  const m=$("msg");
-  m.textContent=words.map(w=>w.my).join(words.some(w=>w.raw)?" ":"");
-  if($("showrom").checked&&words.length){
-    const r=document.createElement("span");r.className="rom";
-    r.textContent=words.map(w=>w.rom||w.my).join(" ");
-    m.appendChild(r);
+  const t=$("thread");t.innerHTML="";
+  const showrom=$("showrom").checked;
+  if(!sent.length&&!words.length){
+    const e=document.createElement("div");e.className="empty";
+    e.innerHTML="<b>သင့်စာသား ဒီမှာပေါ်မယ်</b>your message appears here — "+
+      "type Burglish below, tap the word you meant";
+    t.appendChild(e);
+  }else{
+    const d=document.createElement("div");d.className="daypill";
+    d.textContent="ယနေ့ · today";t.appendChild(d);
   }
-  m.scrollTop=m.scrollHeight;                    // newest word stays in view
+  sent.forEach(s=>{
+    const b=bubble(s.text,showrom?s.rom:"",false,s.time);
+    b.title="ကူးယူ · tap to copy";
+    b.addEventListener("click",()=>{
+      navigator.clipboard.writeText(s.text).then(()=>{
+        b.classList.add("copied");setTimeout(()=>b.classList.remove("copied"),1300);
+      });
+    });
+    t.appendChild(b);
+  });
+  if(words.length){
+    t.appendChild(bubble(msgText(),
+      showrom?words.map(w=>w.rom||w.my).join(" "):"",true,""));
+  }
+  t.scrollTop=t.scrollHeight;
   const empty=!words.length;
-  $("msgwrap").classList.toggle("has",!empty);   // reveal undo / clear
-  $("cpy").disabled=empty;
+  ["undobtn","clrbtn","sendmsg"].forEach(id=>{const b=$(id);if(b)b.disabled=empty});
+}
+/* "send" commits the draft into the thread and copies it — nothing leaves
+   the device; the thread is the demo's own chat */
+function sendMsg(){
+  const t=msgText();
+  if(!t)return;
+  sent.push({text:t,rom:words.map(w=>w.rom||w.my).join(" "),time:clockHM()});
+  words=[];prev=null;
+  navigator.clipboard.writeText(t).catch(()=>{});
+  drawMsg();render();drawStats();
+  $("inp").focus({preventScroll:true});
 }
 function undo(){if(words.length){M.undos++;words.pop();prev=null;drawMsg();render();drawStats()}}
 function clearAll(){words=[];prev=null;drawMsg();render()}
-function copyMsg(){
-  const t=words.map(w=>w.my).join(words.some(w=>w.raw)?" ":"");
-  if(!t)return;
-  navigator.clipboard.writeText(t).then(()=>{
-    const b=$("cpy");b.textContent="✓";
-    setTimeout(()=>{b.textContent="⧉"},1200);
-  });
-}
+
 $("inp").addEventListener("input",render);
 $("inp").addEventListener("keydown",e=>{
   if(e.key===" "||e.key==="Enter"){
     e.preventDefault();
     const txt=$("inp").value.trim().toLowerCase().replace(/[^a-z]/g,"");
-    if(!txt)return;
+    if(!txt){if(e.key==="Enter")sendMsg();return}
     const cs=candidates(txt);
     if(cs.length&&norms(txt).some(v=>KK[cs[0]].startsWith(v)))
       commit(cs[0],null,0,false);
@@ -444,12 +513,18 @@ $("donate").addEventListener("change",()=>{
   }else{p.style.display="none"}
 });
 /* ---- tabs ---- */
-function showTab(which){
-  ["type","more"].forEach(t=>{
-    document.getElementById("pane-"+t).hidden = (t!==which);
-    document.getElementById("tab-"+t).setAttribute("aria-selected",t===which);
-  });
-  if(which==="type")$("inp").focus({preventScroll:true});
+/* one header affordance, like a chat app: info opens the about pane and
+   turns into a close button */
+function toggleMore(){
+  const more=$("pane-more"),open=more.hidden;
+  more.hidden=!open;
+  $("pane-type").hidden=open;
+  const b=$("infobtn");
+  b.setAttribute("aria-expanded",open);
+  b.innerHTML=open?"&#10005;":"&#9432;";
+  b.setAttribute("aria-label",open?"ပိတ်ရန် · back to typing"
+                                 :"အချက်အလက် · about, privacy and feedback");
+  if(!open)$("inp").focus({preventScroll:true});
 }
 /* ---- keep the app sized to what the OS keyboard leaves us ----
    iOS Safari does not shrink the layout viewport when the keyboard opens, so
@@ -472,7 +547,7 @@ function showTab(which){
   keyboard();
 })();
 /* Action buttons must not steal focus from the input on desktop either. */
-document.querySelectorAll(".composerow button,.msgacts button").forEach(b=>
+document.querySelectorAll(".composerow button").forEach(b=>
   b.addEventListener("pointerdown",e=>{if(e.pointerType==="mouse")e.preventDefault()}));
 drawMsg();
 render();
