@@ -57,7 +57,11 @@ display:flex;align-items:center;justify-content:center}
 .hicons button:active{background:rgba(255,255,255,.08)}
 .hicons button[aria-expanded=true]{color:var(--acc)}
 
-/* ---------- top-level tabs ---------- */
+.hmenu{flex:0 0 auto;width:44px;height:44px;min-height:44px;padding:0;
+background:none;border:0;color:var(--ink);font-size:21px;line-height:1;
+border-radius:50%;margin-right:-8px;cursor:pointer}
+.hmenu:active{background:rgba(255,255,255,.08)}
+/* ---------- top-level tabs (removed; kept for the .pane rules below) ---------- */
 .tabs{flex:0 0 auto;display:flex;background:var(--head);
 border-bottom:1px solid var(--ln);padding:0 4px}
 .tabs button{flex:1 1 0;background:none;border:0;color:var(--dim);
@@ -199,9 +203,6 @@ padding:10px 12px;font-size:12.5px;color:#ffc9c9;line-height:1.55}
   outline:3px solid #ff8080;outline-offset:2px}}
 
 /* ---------- More pane ---------- */
-#pane-about{overflow-y:auto;-webkit-overflow-scrolling:touch;
-overscroll-behavior-y:contain;display:flex;flex-direction:column;gap:12px;
-padding:14px 14px calc(16px + env(safe-area-inset-bottom))}
 button{background:var(--pill);border:1px solid var(--ln);color:var(--ink);
 border-radius:11px;padding:10px 8px;font-size:14px;cursor:pointer;font-family:inherit;
 min-height:44px;line-height:1.25;touch-action:manipulation;
@@ -247,16 +248,12 @@ a{color:#53bdeb}
   <b>မြန်မာစာရိုက်</b>
   <span id="presence">Burglish ရိုက် · မြန်မာစာ ထွက်</span>
  </div>
+ <button class="hmenu" id="menubtn" onclick="menu()"
+  aria-label="ရွေးချယ်စရာများ · options">⋮</button>
 </div>
 
-<nav class="tabs" role="tablist" aria-label="အပိုင်းများ · sections">
- <button role="tab" id="tab-chat"  aria-selected="true"  aria-controls="pane-chat"
-  aria-label="စကား · Chat" onclick="showTab('chat')">စကား</button>
- <button role="tab" id="tab-about" aria-selected="false" aria-controls="pane-about"
-  aria-label="အကြောင်း · About" onclick="showTab('about')">အကြောင်း</button>
-</nav>
 
-<section class="pane" id="pane-chat" role="tabpanel" aria-labelledby="tab-chat">
+<section class="pane" id="pane-chat">
  <div class="exbar" id="exbar" hidden>
   <div class="exhead">
    <span id="exnum">1 / 18</span>
@@ -287,30 +284,6 @@ a{color:#53bdeb}
  </div>
 </section>
 
-<section class="pane" id="pane-about" role="tabpanel" aria-labelledby="tab-about" hidden>
-<div class="foot" style="border:0;padding-top:0">
-<b>မျှဝေမှု · sharing</b><br>
-<label><input type="checkbox" id="oovok">also share words the keyboard did NOT know
-(only those exact words — never your full message)</label>
-<label><input type="checkbox" id="donate">ကျွန်ုပ်ရိုက်သည်များကို လှူမည် · donate my typing
-to improve the dictionary — shares what you typed and the words you chose, in
-order. Off by default. Tap to preview exactly what would be sent.</label>
-<div class="stats" id="donpre" style="display:none"></div>
-<button class="pri" onclick="sendFeedback()" id="sendbtn" style="width:100%;margin-top:8px">📨 ပို့မည် · send what I have given</button><br><br>
-<b>ခလုတ်များ · the keys</b><br>
-You use your phone's own keyboard — there is no new layout to learn.<br>
-<b>space</b> — takes the highlighted word · <b>backspace</b> — deletes the last
-word once the box is empty · <b>enter</b> — sends · <b>123</b> — offers ၀-၉ or
-0-9 · <b>. ,</b> — offers ။ and ၊, which are also always on the suggestion
-strip · <b>space twice</b> — a real space, for mixing English in.<br><br>
-<b>ကိုယ်ရေးကိုယ်တာ · privacy:</b> everything runs in your browser and your
-message text is never sent. Numbers only — unless you tick a box that says
-otherwise.<br><br>
-<label><input type="checkbox" id="showrom">show Burglish under words</label>
-<div class="stats" id="stats"></div>
-<a href="../">အပြည့်အစုံ · the full story, the study and the credits →</a>
-</div>
-</section>
 
 </div>
 <script>
@@ -350,8 +323,8 @@ function metricsSummary(){
   rawRate:M.commits?+(M.raw/M.commits).toFixed(2):null,
   ua:navigator.userAgent.slice(0,80),lang:navigator.language};
  s.events=M.events.slice(0,500);
- if(document.getElementById("oovok").checked)s.oovWords=M.oov.slice(0,50);
- if(document.getElementById("donate").checked)s.donatedTyping=M.donated.slice(0,300);
+ if(opt.oov)s.oovWords=M.oov.slice(0,50);
+ if(opt.donate)s.donatedTyping=M.donated.slice(0,300);
  if(M.exercise)s.exercise=M.exercise;   // consented explicitly at exercise start
  return s;
 }
@@ -396,9 +369,11 @@ function sendFeedback(){
   location.href="mailto:"+ANALYTICS.mailto+
    "?subject=Burmese%20keyboard%20feedback&body="+encodeURIComponent(body);
  }
+ /* the manual send button lived in the removed tab; the app now confirms
+    in the conversation instead */
  const b=document.getElementById("sendbtn");
- b.textContent="✓ ကျေးဇူးပါ · thank you!";
- setTimeout(()=>b.textContent="📨 ပို့မည် · send feedback",1800);
+ if(b){b.textContent="✓ ကျေးဇူးပါ · thank you!";
+   setTimeout(()=>b.textContent="📨 ပို့မည် · send feedback",1800);}
 }
 function drawStats(){
  /* the header subtitle is where a chat app shows "last seen"; putting the
@@ -408,10 +383,6 @@ function drawStats(){
  el.textContent=`${M.commits} words · ${(M.keys/M.commits).toFixed(1)} keys/word`+
   ` · 1st right ${Math.round(100*M.top1/M.commits)}%`+
   (M.raw?` · unknown ${M.raw}`:``);
- const full=document.getElementById("stats");
- if(full)full.textContent=`session: ${M.commits} words · `+
-  `${(M.keys/M.commits).toFixed(1)} keys/word · `+
-  `first suggestion right ${Math.round(100*M.top1/M.commits)}% · unknown ${M.raw}`;
 }
 const $=id=>document.getElementById(id);
 function score(i){
@@ -604,7 +575,7 @@ function heard(text,rom){
 
 function drawMsg(){
   const t=$("thread");t.innerHTML="";
-  const showrom=$("showrom")&&$("showrom").checked;
+  const showrom=opt.showrom;
   if(!msgs.length&&!words.length){
     const e=document.createElement("div");e.className="empty";
     e.innerHTML="<b>သင့်စာသား ဒီမှာပေါ်မယ်</b>your message appears here — "+
@@ -676,6 +647,38 @@ function undo(){if(words.length){M.undos++;words.pop();prev=null;drawMsg();rende
 function clearAll(){words=[];prev=null;drawMsg();render()}
 
 const EX_ITEMS = [{"k": "copy", "t": "ပြဿနာရှိပါသလား"}, {"k": "copy", "t": "ဘန်ကောက်မှာဘယ်အချိန်ရှိပြီလဲ"}, {"k": "copy", "t": "ဟုတ်ကဲ့ဒီမှာပါ"}, {"k": "copy", "t": "ရေခဲပြင်မှာချော်လဲပြီးဖင်ထိုင်လျက်ကျတယ်"}, {"k": "copy", "t": "နောက်ရထားတစ်စင်းရောဘယ်လိုလဲ"}, {"k": "copy", "t": "ဒါဘယ်လောက်ကျမလဲ"}, {"k": "copy", "t": "မဆိုးပါဘူးတဲ့"}, {"k": "copy", "t": "ဟုတ်ကဲ့ဒီမှာပါခင်ဗျာ"}, {"k": "copy", "t": "အဆောင်ပိုင်ရှင်အဒေါ်ကြီးကသဘောကောင်းလား"}, {"k": "copy", "t": "ဒီဟာကိုလိုချင်ပါတယ်"}, {"k": "stress", "t": "ခင်ဗျားဘာအားကစားကစားလဲ", "n": "ရှည်သောခလုတ် · long-press glyphs"}, {"k": "stress", "t": "ဘာဖြစ်လို့လဲ", "n": "ရှည်သောခလုတ် · long-press glyphs"}, {"k": "stress", "t": "ဈေးက ၂၅၀၀ ကျပ်ပါ။", "n": "ဂဏန်းနှင့်ပုဒ်ကြီး · numbers and ။"}, {"k": "stress", "t": "ok ကျေးဇူးတင်ပါတယ်", "n": "အင်္ဂလိပ်စာ ရောသုံး · mixed English"}, {"k": "stress", "t": "မောင်မောင် ဘယ်မှာလဲ", "n": "နာမည် · a name, tests the unknown-word fallback"}, {"k": "free", "t": "", "n": "သူငယ်ချင်းကို စာတစ်စောင်ရေးပါ · write a friend a message, anything you like"}, {"k": "free", "t": "", "n": "သူငယ်ချင်းကို စာတစ်စောင်ရေးပါ · write a friend a message, anything you like"}, {"k": "free", "t": "", "n": "သူငယ်ချင်းကို စာတစ်စောင်ရေးပါ · write a friend a message, anything you like"}];
+$("inp").addEventListener("input",render);
+$("inp").addEventListener("keydown",e=>{
+  /* backspace on an empty box deletes the last committed word, which is what
+     every native IME does and the only way to fix a mis-picked word without
+     hunting for the undo icon */
+  if((e.key==="Backspace"||e.key==="Delete")&&!$("inp").value){
+    if(words.length){e.preventDefault();undo()}
+    return;
+  }
+  /* a literal space, for mixed Burmese/English — Burmese words themselves
+     run together, so a space is only ever wanted deliberately */
+  if(e.key===" "&&!$("inp").value.trim()){
+    e.preventDefault();
+    if(words.length&&!words[words.length-1].space)insertRaw(" ","space");
+    return;
+  }
+  if(e.key===" "||e.key==="Enter"){
+    e.preventDefault();
+    const txt=$("inp").value.trim().toLowerCase().replace(/[^a-z]/g,"");
+    if(!txt){
+      const rest=$("inp").value.trim();
+      if(rest){insertRaw(rest,/^[0-9]+$/.test(rest)?"num":"punct");return}
+      if(e.key==="Enter")sendMsg();
+      return;
+    }
+    const cs=candidates(txt);
+    if(cs.length&&norms(txt).some(v=>KK[cs[0]].startsWith(v)))
+      commit(cs[0],null,0,false);
+    else commit(null,txt,-1,false);
+  }
+});
+
 /* ================= the conversation ================= */
 const convo={mode:null,i:0,rows:[],answers:[],snap:null,t0:0};
 function snap(){
@@ -688,9 +691,28 @@ function convoHeard(text){
 }
 
 /* ---- the guided test, as a conversation ---- */
-function testOffer(){
+function hello(){
   say("<b>မင်္ဂလာပါ · hello</b><br>Type Burglish below and tap the Burmese word "+
-      "you meant — that is the whole idea.<br><br>If you have 20 minutes, I can "+
+      "you meant — that is the whole idea. Everything runs on your phone; your "+
+      "messages are never sent.",
+      [{label:"ဆက်ရန် · go on",act:()=>setTimeout(askSharingThenTest,300)}]);
+}
+function askSharingThenTest(){
+  const after=()=>setTimeout(testOffer,900);
+  say("<b>မျှဝေမှု · sharing</b><br>I send numbers only — taps per word, how "+
+      "often the first suggestion was right. Never your words, unless you say "+
+      "so:<br><span class='dim'>• words the keyboard did not know — those exact "+
+      "words only<br>• the words you typed and chose, in order, to improve the "+
+      "dictionary</span>",[
+    {label:"နှစ်ခုလုံး · both",act:()=>{opt.oov=true;opt.donate=true;
+      say("ကျေးဇူးပါ · thank you.");after()}},
+    {label:"မသိသောစာလုံးများသာ · unknown only",ghost:true,
+      act:()=>{opt.oov=true;say("ရပါတယ် · noted.");after()}},
+    {label:"ဂဏန်းများသာ · numbers only",ghost:true,
+      act:()=>{say("ရပါတယ် · numbers only.");after()}}]);
+}
+function testOffer(){
+  say("<b>လေ့ကျင့်ခန်း · a favour?</b><br>If you have 20 minutes, I can "+
       "walk you through <b>18 short tasks</b>. It turns your session into a "+
       "number we can check our simulation against, and it is the only way we "+
       "learn how <i>you</i> spell Burglish.<br><br><span class='dim'>I would "+
@@ -801,26 +823,54 @@ setInterval(maybeAsk,20000);
 /* ---- tabs ---- */
 /* one header affordance, like a chat app: info opens the about pane and
    turns into a close button */
-const TABS=["chat","about"];
-function showTab(which,hash){
-  if(!TABS.includes(which))which="chat";
-  TABS.forEach(t=>{
-    $("pane-"+t).hidden = (t!==which);
-    $("tab-"+t).setAttribute("aria-selected", t===which);
-  });
-  if(which==="chat")$("inp").focus({preventScroll:true});
-  else $("inp").blur();
-  if(hash!==false&&location.hash.slice(1)!==which)history.replaceState(null,"","#"+which);
-}
-/* deep links: web-my/#test drops a recruited tester straight into the task,
-   so inviting someone is one URL instead of four taps to lose them in */
+/* the chat is the only surface now; #test still deep-links into the task */
 function routeHash(){
-  const h=(location.hash||"").slice(1);
-  if(h==="test"){ showTab("chat",false);
-    if(!convo.mode&&!msgs.length)setTimeout(testStart,500); }
-  else if(h) showTab(h,false);
+  if((location.hash||"").slice(1)==="test"&&!convo.mode&&!msgs.length)
+    setTimeout(testStart,500);
 }
 addEventListener("hashchange",routeHash);
+
+/* settings are state, not checkboxes — the consent question sets them */
+const opt={showrom:false,oov:false,donate:false};
+
+/* the header ⋮ does not open a screen: it makes the app say the menu */
+function menu(){
+  say("<b>ရွေးချယ်စရာများ · options</b>",[
+    {label:"လေ့ကျင့်ခန်း · guided test",act:testOffer},
+    {label:"မျှဝေမှု · sharing",ghost:true,act:askSharing},
+    {label:"ခလုတ်များ · the keys",ghost:true,act:sayKeys},
+    {label:"ကိုယ်ရေး · privacy",ghost:true,act:sayPrivacy}]);
+}
+function sayKeys(){
+  say("<b>ခလုတ်များ · the keys</b><br>You use your phone's own keyboard — "+
+      "there is no new layout to learn.<br><br>"+
+      "<b>space</b> — takes the highlighted word<br>"+
+      "<b>backspace</b> — deletes the last word once the box is empty<br>"+
+      "<b>enter</b> — sends<br><b>123</b> — offers ၀-၉ or 0-9<br>"+
+      "<b>. ,</b> — offers ။ and ၊, also always on the strip<br>"+
+      "<b>space twice</b> — a real space, for mixing English in");
+}
+function sayPrivacy(){
+  say("<b>ကိုယ်ရေးကိုယ်တာ · privacy</b><br>Everything runs in your browser and "+
+      "your message text is never sent. What we receive is numbers — taps per "+
+      "word, how often the first suggestion was right — unless you told me "+
+      "otherwise below.<br><br><span class='dim'>Built on myG2P and myPOS by "+
+      "Ye Kyaw Thu et al. (CC BY-NC-SA 4.0). Free and noncommercial.</span>");
+}
+function askSharing(){
+  say("<b>မျှဝေမှု · sharing</b><br>By default I only send numbers, never your "+
+      "words. Two things you can add, if you want to:<br>"+
+      "<span class='dim'>• words the keyboard did not know — those exact words "+
+      "only<br>• the words you typed and chose, in order, to improve the "+
+      "dictionary</span>",[
+    {label:"နှစ်ခုလုံး · both",act:()=>{opt.oov=true;opt.donate=true;
+      say("ကျေးဇူးပါ · thank you — that helps the dictionary most.")}},
+    {label:"မသိသောစာလုံးများသာ · unknown words only",ghost:true,
+      act:()=>{opt.oov=true;opt.donate=false;say("ရပါတယ် · noted.")}},
+    {label:"ဂဏန်းများသာ · numbers only",ghost:true,
+      act:()=>{opt.oov=false;opt.donate=false;
+      say("ရပါတယ် · numbers only. Nothing you type leaves your phone.")}}]);
+}
 /* ---- keep the app sized to what the OS keyboard leaves us ----
    iOS Safari does not shrink the layout viewport when the keyboard opens, so
    without this the bottom of the app hides behind it. visualViewport reports
@@ -858,7 +908,7 @@ drawMsg();
 render();
 routeHash();
 /* first visit: the app introduces itself and offers the test */
-if(!stored(seenKey)&&location.hash.slice(1)!=="test")setTimeout(testOffer,650);
+if(!stored(seenKey)&&location.hash.slice(1)!=="test")setTimeout(hello,650);
 </script></body></html>'''
 open("try-burmese.html","w").write(html.replace("__DATA__", data))
 import os; print("wrote try-burmese.html", os.path.getsize("try-burmese.html"), "bytes")
