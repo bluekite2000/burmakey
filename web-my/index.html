@@ -170,7 +170,7 @@ padding:14px;display:flex;flex-direction:column;gap:10px}
 .exstart p{margin:0;font-size:12.5px;color:var(--dim);line-height:1.6}
 
 /* ---------- More pane ---------- */
-#pane-test,#pane-fb,#pane-about{overflow-y:auto;-webkit-overflow-scrolling:touch;
+#pane-help,#pane-about{overflow-y:auto;-webkit-overflow-scrolling:touch;
 overscroll-behavior-y:contain;display:flex;flex-direction:column;gap:12px;
 padding:14px 14px calc(16px + env(safe-area-inset-bottom))}
 button{background:var(--pill);border:1px solid var(--ln);color:var(--ink);
@@ -218,10 +218,8 @@ a{color:#53bdeb}
 <nav class="tabs" role="tablist" aria-label="အပိုင်းများ · sections">
  <button role="tab" id="tab-chat"  aria-selected="true"  aria-controls="pane-chat"
   aria-label="စကား · Chat" onclick="showTab('chat')">စကား</button>
- <button role="tab" id="tab-test"  aria-selected="false" aria-controls="pane-test"
-  aria-label="လေ့ကျင့်ခန်း · Test" onclick="showTab('test')">လေ့ကျင့်</button>
- <button role="tab" id="tab-fb"    aria-selected="false" aria-controls="pane-fb"
-  aria-label="သင့်အမြင် · Feedback" onclick="showTab('fb')">အမြင်</button>
+ <button role="tab" id="tab-help"  aria-selected="false" aria-controls="pane-help"
+  aria-label="ကူညီပါ · help us improve it" onclick="showTab('help')">ကူညီပါ</button>
  <button role="tab" id="tab-about" aria-selected="false" aria-controls="pane-about"
   aria-label="အကြောင်း · About" onclick="showTab('about')">အကြောင်း</button>
 </nav>
@@ -257,7 +255,7 @@ a{color:#53bdeb}
  </div>
 </section>
 
-<section class="pane" id="pane-test" role="tabpanel" aria-labelledby="tab-test" hidden>
+<section class="pane" id="pane-help" role="tabpanel" aria-labelledby="tab-help" hidden>
 <div class="exstart">
 <h2>လေ့ကျင့်ခန်း · guided test <span style="color:var(--dim);font-weight:400">(~20 min)</span></h2>
 <p>18 short tasks: copy 10 sentences, 5 tricky ones (numbers, punctuation,
@@ -270,9 +268,6 @@ to you, and the 3 free messages are yours to choose. Nothing else is recorded.</
 <button class="pri" id="exgo" onclick="exStart()">စတင်မည် · start the test</button>
 </div>
 
-</section>
-
-<section class="pane" id="pane-fb" role="tabpanel" aria-labelledby="tab-fb" hidden>
 <div class="fb">
 <h2>သင့်အမြင် · your feedback</h2>
 <div class="thumbs">
@@ -289,37 +284,22 @@ order. Off by default. Tap to preview exactly what would be sent.</label>
 <div class="stats" id="donpre" style="display:none"></div>
 <button class="pri" onclick="sendFeedback()" id="sendbtn">📨 ပို့မည် · send feedback</button>
 </div>
-
 </section>
 
 <section class="pane" id="pane-about" role="tabpanel" aria-labelledby="tab-about" hidden>
-<p class="sub">Burglish ရိုက်နေကျအတိုင်း ရိုက်ပါ — အသံထွက်အတိုင်း — မှန်တဲ့စာလုံးကို နှိပ်ပါ · type Burglish the way it sounds, tap the right word, get real Burmese</p>
-<label><input type="checkbox" id="showrom">show Burglish under words</label>
-<div class="stats" id="stats"></div>
-<div class="foot">
+<div class="foot" style="border:0;padding-top:0">
 <b>ခလုတ်များ · the keys</b><br>
 You use your phone's own keyboard — there is no new layout to learn.<br>
 <b>space</b> — takes the highlighted word · <b>backspace</b> — deletes the last
 word once the box is empty · <b>enter</b> — sends · <b>123</b> — offers ၀-၉ or
 0-9 · <b>. ,</b> — offers ။ and ၊, which are also always on the suggestion
 strip · <b>space twice</b> — a real space, for mixing English in.<br><br>
-<b>ဒါဘာလဲ · what is this?</b><br>
-A keyboard idea for Burmese: type Burglish the way you already do in chat —
-no tones, no new spelling, no Myanmar layout to learn — and it writes real
-Burmese script (always clean Unicode, never Zawgyi-garbled). It learns your
-words during the session. Unknown words are kept exactly as you typed them.
-Nothing is actually sent anywhere — "send" adds the message to this thread and
-copies it to your clipboard.<br><br>
-<b>Privacy:</b> everything runs in your browser; your message text is never
-sent. When you press "send feedback" (or automatically at session end, if
-analytics is configured), we receive <i>numbers only</i> — taps per word, how
-often the first suggestion was right — never the words themselves. Two
-exceptions, both off by default and only if you tick them: unknown words, and
-donated typing, shown to you first.<br><br>
-<a href="https://github.com/bluekite2000/burmakey">open source &amp; study</a> ·
-lexicon from <a href="https://github.com/ye-kyaw-thu/myG2P">myG2P</a> and
-<a href="https://github.com/ye-kyaw-thu/myPOS">myPOS</a> (Ye Kyaw Thu et al.,
-CC BY-NC-SA 4.0 — this tool is free and noncommercial)
+<b>ကိုယ်ရေးကိုယ်တာ · privacy:</b> everything runs in your browser and your
+message text is never sent. Numbers only — unless you tick a box that says
+otherwise.<br><br>
+<label><input type="checkbox" id="showrom">show Burglish under words</label>
+<div class="stats" id="stats"></div>
+<a href="../">အပြည့်အစုံ · the full story, the study and the credits →</a>
 </div>
 </section>
 
@@ -16946,25 +16926,44 @@ function exFinish(){
   d.innerHTML="<b>ကျေးဇူးတင်ပါတယ် · thank you!</b><br>"+
     ex.rows.length+" tasks · "+tw+" words · <b>"+(tw?(tt/tw).toFixed(2):"—")+
     "</b> taps/word · "+okN+"/"+scored.length+" copied exactly · "+secs+"s<br>"+
-    "<span style='color:var(--dim)'>Now open the <b>အမြင် · Feedback</b> tab and press send. "+
-    "Please add a comment about which words came out wrong.</span>";
+    "<span style='color:var(--dim)'>Your results are already sent. One last thing "+
+    "below — which words came out wrong?</span>";
   $("thread").appendChild(d);
   $("thread").scrollTop=$("thread").scrollHeight;
   M.exercise=ex.rows;                 // rides along with the next beacon
   beacon({event:"exercise"});
+  /* don't make them navigate: land them on the comment box, focused, asking
+     the one question whose answer we cannot get any other way */
+  showTab("help");
+  const c=$("cmt");
+  if(c){
+    c.placeholder="ဘယ်စာလုံးတွေ မှားလဲ · which words came out wrong? "+
+                  "which spellings felt unnatural?";
+    setTimeout(()=>{c.scrollIntoView({block:"center"});c.focus()},240);
+  }
 }
 /* ---- tabs ---- */
 /* one header affordance, like a chat app: info opens the about pane and
    turns into a close button */
-const TABS=["chat","test","fb","about"];
-function showTab(which){
+const TABS=["chat","help","about"];
+function showTab(which,hash){
+  if(!TABS.includes(which))which="chat";
   TABS.forEach(t=>{
     $("pane-"+t).hidden = (t!==which);
     $("tab-"+t).setAttribute("aria-selected", t===which);
   });
   if(which==="chat")$("inp").focus({preventScroll:true});
   else $("inp").blur();
+  if(hash!==false&&location.hash.slice(1)!==which)history.replaceState(null,"","#"+which);
 }
+/* deep links: web-my/#test drops a recruited tester straight into the task,
+   so inviting someone is one URL instead of four taps to lose them in */
+function routeHash(){
+  const h=(location.hash||"").slice(1);
+  if(h==="test"){ showTab("help",false); const b=$("exgo"); if(b)b.scrollIntoView(); }
+  else if(h) showTab(h,false);
+}
+addEventListener("hashchange",routeHash);
 /* ---- keep the app sized to what the OS keyboard leaves us ----
    iOS Safari does not shrink the layout viewport when the keyboard opens, so
    without this the bottom of the app hides behind it. visualViewport reports
@@ -17000,4 +16999,5 @@ document.querySelectorAll(".composerow button").forEach(b=>
   b.addEventListener("pointerdown",e=>{if(e.pointerType==="mouse")e.preventDefault()}));
 drawMsg();
 render();
+routeHash();
 </script></body></html>
