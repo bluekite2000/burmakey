@@ -105,7 +105,17 @@ def latin_layout():
     return lay
 
 
-def script_layout(freq_chars, cols=10, base_rows=4, order="alphabetical"):
+# Bagan v14.62's real Myanmar Unicode layer assignment, read off the running
+# app by tapping and long-pressing every key position (see the measurement
+# note in the module docstring). The base layer is NOT the most frequent
+# glyphs — it follows alphabet tradition, so the common medials ha and wa,
+# and several frequent vowel signs, sit behind a long-press.
+MEASURED_BASE = 'ကခဂငစဆညဏတထနပဖဘမယရလဝသဟအာိုူ့း်ျ\u200bေ\u200bြ'
+MEASURED_HOLD = 'ဃဇဈဉဋဌဍဒဓဗဠဥဪါီဲံွှဿ၊။'
+
+
+def script_layout(freq_chars, cols=10, base_rows=4, order="alphabetical",
+                  measured=True):
     """A Myanmar script layout: `cols` x `base_rows` of glyphs on the base
     layer, everything rarer behind a layer switch.
 
@@ -122,8 +132,13 @@ def script_layout(freq_chars, cols=10, base_rows=4, order="alphabetical"):
     easiest positions — an idealised layout that no shipping keyboard uses,
     included as a best case FOR THE COMPETITOR.
     """
-    n_base = cols * base_rows - 4          # minus enter/backspace/space/layer
     ranked = [ch for ch, _ in freq_chars]
+    if measured:
+        # what the app actually does
+        base = [c for c in MEASURED_BASE]
+        rest = [c for c in ranked if c not in set(base)]
+        return Layout("script-%d/measured" % cols, cols, base, rest)
+    n_base = cols * base_rows - 4          # minus enter/backspace/space/layer
     base = ranked[:n_base]
     rest = ranked[n_base:]
     if order == "alphabetical":
@@ -163,9 +178,12 @@ def time_for_trace(trace, layout, costs):
     trace = (code_string_typed, pick_slot_or_None)
       code_string_typed : the characters actually pressed before committing
       pick_slot         : candidate-bar position picked (0-based), or None if
-                          the word was typed out and committed with space
+                          the word was typed out
+      commits           : optional 3rd element; False for systems with no
+                          per-word commit tap (Burmese script entry)
     """
-    code, slot = trace
+    code, slot = trace[0], trace[1]
+    commits = trace[2] if len(trace) > 2 else True
     t = 0.0
     cur = layout.layer_key_pos          # thumb starts near the bottom row
     w = layout.target_w()
@@ -185,9 +203,14 @@ def time_for_trace(trace, layout, costs):
         cur = p
 
     if slot is None:
-        # committed with the space bar
-        sp = (SCREEN_W / 2, (layout.rows - 0.5) * KEY_H)
-        t += costs.move(dist(cur, sp), w)
+        if commits:
+            # committed with the space bar
+            sp = (SCREEN_W / 2, (layout.rows - 0.5) * KEY_H)
+            t += costs.move(dist(cur, sp), w)
+        # else: nothing. MEASURED on the real app — Burmese script is written
+        # without spaces between words, so character entry has no per-word
+        # commit tap. The model charged one, inflating the competitor by ~1
+        # tap/word (its 5.18 baseline vs 4.46 measured).
     else:
         sp = layout.strip_pos(slot)
         t += costs.scan_base + costs.scan_per_slot * slot
@@ -260,8 +283,13 @@ def run_engine(sents, code_of, by_prefix, shortlist=5, pretrain=True):
 
 
 def run_no_engine(sents, code_of):
-    """Character-by-character entry: every glyph typed, space to commit."""
-    return [(code_of[w], None) for s in sents for w in s if w in code_of]
+    """Character-by-character entry: every glyph typed, and NO commit tap.
+
+    Measured on Bagan v14.62: 15 held-out chat sentences typed on the real app
+    and verified character-for-character came to 4.46 taps/word, i.e. exactly
+    the codepoints, with no per-word space. See bench2.py.
+    """
+    return [(code_of[w], None, False) for s in sents for w in s if w in code_of]
 
 
 # =====================================================================
@@ -286,7 +314,7 @@ def main(sweep=False):
 
     lay_latin = latin_layout()
     lay_script_alpha = script_layout(ranked, order="alphabetical")
-    lay_script_freq = script_layout(ranked, order="frequency")
+    lay_script_freq = script_layout(ranked, order="frequency", measured=False)
 
     base_n = lay_script_alpha.cols * 4 - 4
     covered = sum(c for ch, c in ranked[:base_n])
@@ -332,7 +360,10 @@ def main(sweep=False):
             traces, lay = systems[(stream, sysname)]
             secs = sum(time_for_trace(t, lay, base) for t in traces) / len(traces)
             row[stream] = secs
-            row[stream + "_taps"] = sum(len(t[0]) + 1 for t in traces) / len(traces)
+            # +1 only where a commit tap really exists (engine systems)
+            row[stream + "_taps"] = sum(
+                len(t[0]) + (1 if (len(t) < 3 or t[2]) else 0)
+                for t in traces) / len(traces)
         results[sysname] = row
         print("%-42s %8.3f %8.3f %8.1f"
               % (LABEL[sysname], row["chat"], row["essay"], 60.0 / row["chat"]))

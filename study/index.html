@@ -330,9 +330,9 @@ every tap counted the same.</p>
     <div class="brow" tabindex="0">
       <span class="blab">Bagan as actually used</span>
       <span class="bmeasure"><span class="bfill"
-        style="width:85.0%;--c:var(--series-2)"></span></span>
-      <span class="bval">5.10</span>
-      <span class="tip"><b>5.10 taps/word</b> — every glyph typed, plus a
+        style="width:68.3%;--c:var(--series-2)"></span></span>
+      <span class="bval">4.10</span>
+      <span class="tip"><b>4.10 taps/word</b> — every glyph typed, plus a
       layer switch for the rarer ones.</span>
     </div>
     <div class="brow" tabindex="0">
@@ -359,9 +359,9 @@ every tap counted the same.</p>
     <div class="brow" tabindex="0">
       <span class="blab">Bagan as actually used</span>
       <span class="bmeasure"><span class="bfill"
-        style="width:88.3%;--c:var(--series-2)"></span></span>
-      <span class="bval">5.30</span>
-      <span class="tip"><b>5.30 taps/word</b> — longer sentences, same
+        style="width:71.7%;--c:var(--series-2)"></span></span>
+      <span class="bval">4.30</span>
+      <span class="tip"><b>4.30 taps/word</b> — longer sentences, same
       character-by-character entry.</span>
     </div>
     <div class="brow" tabindex="0">
@@ -388,7 +388,7 @@ every tap counted the same.</p>
 <table>
 <thead><tr><th>System</th><th>Chat</th><th>Essay</th></tr></thead>
 <tbody>
-<tr><td>Bagan as actually used</td><td>5.10</td><td>5.30</td></tr>
+<tr><td>Bagan as actually used</td><td>4.10</td><td>4.30</td></tr>
 <tr><td>Bagan + our engine (does not exist)</td><td>2.33</td><td>2.51</td></tr>
 <tr><td>BurmaKey (Burglish in, script out)</td><td>2.45</td><td>2.67</td></tr>
 </tbody></table></div></details>
@@ -398,10 +398,15 @@ every tap counted the same.</p>
 <p>Counting taps hides four things that matter on a handset, and they do not
 all point the same way:</p>
 <ul>
-<li><b>Key size is a wash, not an advantage.</b> Bagan&rsquo;s Myanmar layout
-was measured on a real install: <b>10 columns × 4 letter rows</b>, the same key
-width as a 26-key Latin layout. An earlier guess of 11 columns handed BurmaKey
-a Fitts advantage that does not exist. <i>Favours neither.</i></li>
+<li><b>Bagan was measured, not assumed.</b> v14.62 was installed on an
+emulator and every key probed. Three corrections followed, and they do not all
+favour us: its layout is <b>10 columns</b>, the same key width as Latin (an
+earlier guess of 11 handed us a Fitts advantage that does not exist); its base
+layer is assigned by <b>alphabet order, not frequency</b>, so <b>9.2%</b> of
+real glyphs need a long-press rather than the 0.5% assumed; and Burmese script
+has <b>no per-word commit tap</b> — the model was charging one, inflating the
+competitor by a full tap per word. <i>Net: substantially less favourable to
+us.</i></li>
 <li>Glyphs that do not fit the base layer sit behind a <b>layer switch</b>
 costing an extra tap. In practice this barely matters: a 40-key base layer
 already covers <b>99.5%</b> of real keystrokes. <i>Nearly neutral.</i></li>
@@ -437,11 +442,11 @@ is stable across all 81 combinations of the sensitivity sweep.</p>
   <div class="group">
   <p class="gtitle">Chat — messages of 8 words or fewer</p>
     <div class="brow" tabindex="0">
-      <span class="blab">Bagan as actually used <em>28 wpm</em></span>
+      <span class="blab">Bagan as actually used <em>30 wpm</em></span>
       <span class="bmeasure"><span class="bfill"
-        style="width:87.0%;--c:var(--series-2)"></span></span>
+        style="width:79.7%;--c:var(--series-2)"></span></span>
       <span class="bval">2.18</span>
-      <span class="tip"><b>2.18 s/word · 28 wpm</b> — small keys, every glyph
+      <span class="tip"><b>1.99 s/word · 30 wpm</b> — small keys, every glyph
       typed, no useful prediction.</span>
     </div>
     <div class="brow" tabindex="0">
@@ -457,7 +462,7 @@ is stable across all 81 combinations of the sensitivity sweep.</p>
       <span class="bmeasure"><span class="bfill"
         style="width:54.4%;--c:var(--series-1)"></span></span>
       <span class="bval">1.36</span>
-      <span class="tip"><b>1.36 s/word · 44 wpm</b> — 37% faster than Bagan as
+      <span class="tip"><b>1.36 s/word · 44 wpm</b> — 32% faster than Bagan as
       it exists, but about 5% slower than the hypothetical.</span>
     </div>
   </div>
@@ -467,9 +472,9 @@ is stable across all 81 combinations of the sensitivity sweep.</p>
     <div class="brow" tabindex="0">
       <span class="blab">Bagan as actually used</span>
       <span class="bmeasure"><span class="bfill"
-        style="width:91.0%;--c:var(--series-2)"></span></span>
+        style="width:81.9%;--c:var(--series-2)"></span></span>
       <span class="bval">2.28</span>
-      <span class="tip"><b>2.28 s/word</b> — longer words, same slow
+      <span class="tip"><b>2.05 s/word</b> — longer words, same slow
       entry.</span>
     </div>
     <div class="brow" tabindex="0">
@@ -484,7 +489,7 @@ is stable across all 81 combinations of the sensitivity sweep.</p>
       <span class="bmeasure"><span class="bfill"
         style="width:57.4%;--c:var(--series-1)"></span></span>
       <span class="bval">1.44</span>
-      <span class="tip"><b>1.44 s/word</b> — 37% faster than Bagan as it
+      <span class="tip"><b>1.44 s/word</b> — 30% faster than Bagan as it
       exists, about 4% slower than the hypothetical.</span>
     </div>
   </div>
@@ -496,28 +501,28 @@ is stable across all 81 combinations of the sensitivity sweep.</p>
 <table>
 <thead><tr><th>System</th><th>Chat s/word</th><th>Essay s/word</th><th>Chat wpm</th></tr></thead>
 <tbody>
-<tr><td>Bagan / TTKeyboard as actually used</td><td>2.18</td><td>2.28</td><td>27.6</td></tr>
+<tr><td>Bagan / TTKeyboard as actually used</td><td>1.99</td><td>2.05</td><td>30.1</td></tr>
 <tr><td>Bagan + our engine (does not exist)</td><td>1.30</td><td>1.38</td><td>46.3</td></tr>
 <tr><td>Bagan + our engine + ideal key placement</td><td>1.25</td><td>1.35</td><td>48.1</td></tr>
 <tr><td>BurmaKey (Burglish in, script out)</td><td>1.36</td><td>1.44</td><td>44.1</td></tr>
-<tr><td>BurmaKey vs Bagan as used — sweep range</td><td>−44.2% … −22.4%</td><td>−43.3% … −22.6%</td><td>—</td></tr>
-<tr><td>BurmaKey vs Bagan + engine — sweep range</td><td>+4.4% … +6.6%</td><td>+3.6% … +5.4%</td><td>—</td></tr>
+<tr><td>BurmaKey vs Bagan as used — sweep range</td><td>−39.3% … −15.0%</td><td>−37.2% … −13.7%</td><td>—</td></tr>
+<tr><td>BurmaKey vs Bagan + engine — sweep range</td><td>+3.2% … +5.5%</td><td>+2.6% … +4.5%</td><td>—</td></tr>
 </tbody></table></div></details>
 </figure>
 
 <div class="callout">
 <p><b>The phone model is less flattering than the tap count, and it corrects
 two earlier claims.</b> Against Bagan as it actually exists, BurmaKey is
-<b>about 37% faster</b>, not the ~50% the tap count implied — because a
+<b>about 32% faster</b>, not the ~50% the tap count implied — because a
 candidate pick costs a scan that a tap count treats as free. Against a
 hypothetical Bagan carrying this exact engine, BurmaKey is not the
 &ldquo;statistical tie&rdquo; reported earlier: it is consistently
-<b>4–7% slower</b>, in every one of the 81 parameter combinations tested.
+<b>3–5% slower</b>, in every one of the 81 parameter combinations tested.
 Script characters simply narrow the candidate list faster than Latin letters,
 and bigger Latin keys do not quite buy that back.</p>
 <p>Both conclusions are robust in <i>sign</i> across the whole sweep, but the
-magnitudes move a lot — the advantage over real competitors ranges from −22%
-to −44% depending on how expensive you believe a visual scan is. Treat the
+magnitudes move a lot — the advantage over real competitors ranges from −15%
+to −39% depending on how expensive you believe a visual scan is. Treat the
 direction as the finding and the size as an estimate.</p>
 <p><b>What survives is the original point, sharpened: the engine is the
 product.</b> The measured advantage comes almost entirely from prediction, not
