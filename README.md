@@ -94,6 +94,18 @@ tier: 100 submissions/month — fine for a pilot; swap in a Formspree URL or
 raise the plan if testers exceed it. GitHub Pages also works but needs a
 Formspree endpoint since it has no form handling.
 
+**Guided test (`ⓘ → start the test`).** Free typing cannot be scored:
+between-user spread is 11% of the median, larger than the design differences,
+and the analytics record what was *produced* but never what the user was
+*trying* to produce. The guided test fixes that with 18 tasks — 10 sentences
+copied from the same held-out myPOS set the simulation scored, 5 stress items
+(long-press glyphs, numbers, ။, mixed English, a name for the OOV fallback),
+and 3 free messages. Each logs target, produced, exact-match, taps, words,
+candidate positions and elapsed time, so measured taps/word can be compared
+directly against the simulated 2.45, and so the Burglish spellings real people
+invent become visible for the first time. Recording is off until the tester
+ticks consent, and covers the exercise only.
+
 **Analytics — three levels:** (1) session totals (taps/word, hit rates) and
 (2) per-word content-free events (keys pressed, candidate position, timing)
 are sent automatically once an endpoint is set — never message text. (3) The
