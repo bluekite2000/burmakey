@@ -204,10 +204,66 @@ attested variants, sampled by frequency. That is a far better model than
 assuming one canonical spelling, but it is still not measured from Burmese
 typists. The guided test in the keyboard is what would replace it with data.
 
+## 7. v3: an original rule-based G2P, no dictionary at runtime
+
+`src/g2p_rules.py` is a Burmese G2P written from the writing system itself —
+consonant values, medials, the rhyme system, stacked finals, and the
+word-internal voicing sandhi as a productive rule. Facts of phonology are not
+copyrightable; myG2P was used only as held-out gold to *score* it, and nothing
+from it ships in the v3 runtime path.
+
+Scored against all 24k gold entries (`src/eval_g2p.py`):
+
+| | rules |
+|---|---|
+| syllables matching an attested form | **85.8%** |
+| whole words matching an attested form | **74.7%** |
+| segmenter exact-match (vs pipeline's regex 89.4%) | **90.3%** |
+
+The voicing rule alone regenerates the dha/ga/da/ba alternations the
+dictionary pipeline could only memorise.
+
+### The engine, three ways (`src/h2h_v3.py`)
+
+| | input | taps/word | unreachable |
+|---|---|---|---|
+| Bagan / TTKeyboard | — | 4.19 | — |
+| v1 dictionary + 8 rules | canonical | 2.76 | 1.2% |
+| v2 dictionary, all variants | canonical | 2.87 | 2.0% |
+| v3 **rules only** | canonical | 3.07 | 13.2% |
+| v1 | realistic | 3.17 | 20.3% |
+| v2 | realistic | **2.88** | **2.1%** |
+| v3 **rules only** | realistic | 3.25 | 22.8% |
+
+### The honest reading
+
+**v3 is not better than v2 in every aspect, and the aspects split cleanly:**
+
+- **Licensing** — v3 wins outright. Its runtime needs no myG2P-derived data at
+  all. (Word frequencies still come from myPOS; that NC dependency remains.)
+- **Coverage** — v3 wins: it romanizes **30,176 corpus words against v2's
+  16,192**, and generalises to any Burmese string, including names and new
+  words no dictionary holds.
+- **Accuracy on dictionary spellings** — v2 wins, and the margin (2.88 vs
+  3.25) must be read with its bias: the "realistic" spellings are sampled from
+  myG2P's own variants, which is **v2's training data and v3's held-out
+  test**. On this benchmark v2 cannot lose; it is being asked to recall.
+- v3's 13–23% unreachable rate is the direct shadow of the rules' 74.7% word
+  accuracy: where the rules disagree with the dictionary spelling, the typed
+  form misses the index.
+
+**Where this leaves the design:** the ceiling for a shipped keyboard is the
+hybrid — v3's rules for coverage, licence-safety and OOV generalisation, with
+whatever attested-variant data one is licensed to use layered on top. Rules
+carry the structure; data corrects the exceptions. And the rules file is
+~200 lines that a native speaker can read and fix line by line, which no
+dictionary offers.
+
 ## Reproducing the numbers
 
 ```bash
 git clone https://github.com/ye-kyaw-thu/myG2P /tmp/myg2p
 git clone https://github.com/ye-kyaw-thu/myPOS /tmp/mypos
 cd src && python3 study_data.py && python3 h2h_v2.py
+python3 eval_g2p.py && python3 h2h_v3.py
 ```
