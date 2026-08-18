@@ -16685,6 +16685,9 @@ function commit(i,raw,pos,zeroKey){
   const nrm=(i!==null&&t0&&!KK[i].startsWith(t0))?1:0;
   if(M.events.length<500)M.events.push([t0.length,i!==null?pos:-1,zeroKey?1:0,nrm,i===null?1:0,dt]);
   if(M.donated.length<300)M.donated.push([t0,i!==null?LO[i]:raw]);
+  /* during the guided test, the typed Burglish IS the datum the test exists
+     to collect — its consent covers exactly this */
+  if(convo.mode==="test")convo.typed.push([t0,i!==null?LO[i]:raw,i!==null?pos:-1]);
   if(i!==null){
     if(pos===0)M.top1++;else M.barPick++;
     if(nrm)M.normed++;
@@ -16885,7 +16888,7 @@ function sayKeys(){
       "<span class='dim'>Type <b>help</b> any time to see this again.</span>");
 }
 /* ================= the conversation ================= */
-const convo={mode:null,i:0,rows:[],answers:[],snap:null,t0:0};
+const convo={mode:null,i:0,rows:[],answers:[],snap:null,t0:0,typed:[]};
 function snap(){
   return {keys:M.keys,commits:M.commits,top1:M.top1,bar:M.barPick,
           raw:M.raw,zero:M.zeroKey,extras:M.extras||0};
@@ -16948,7 +16951,8 @@ function testHeard(produced,skipped){
     match:match,skipped:!!skipped,taps:taps,words:commits,
     tpw:commits?+(taps/commits).toFixed(2):null,
     top1:b.top1-a.top1,bar:b.bar-a.bar,raw:b.raw-a.raw,
-    zero:b.zero-a.zero,extras:b.extras-a.extras,ms:Date.now()-convo.t0});
+    zero:b.zero-a.zero,extras:b.extras-a.extras,ms:Date.now()-convo.t0,
+    typed:convo.typed.splice(0)});
   if(!skipped){
     if(match===true)say("✓ <b>တိတိကျကျ · exact</b>");
     else if(match===false)say("≈ ကွာသွားပါတယ် · I asked for <span class='ask'>"+
