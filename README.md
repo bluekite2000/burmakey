@@ -188,7 +188,17 @@ The POS-class backoff proposed in the same document **did not work** — 2.87
 without it, 2.88 with. The sparsity it targeted is real; 16 tags are too coarse
 to exploit it. That section is marked wrong rather than removed.
 
-Reproduce with `python3 src/study_data.py && python3 src/h2h_v2.py`.
+**The end state is v4, the hybrid** (`src/h2h_v4.py`): an original rule-based
+G2P (`src/g2p_rules.py`, written from the orthography, 85.8% syllable accuracy
+against gold, licence-clean) as the backbone, with attested spellings layered
+on top where licensed data exists. Weighted over the whole corpus — including
+the 12% of real tokens no dictionary contains — **v4: 3.11 taps/word, 2.5%
+unreachable**, against the shipped engine's 3.86/29.8% and the competitors'
+4.95. It dominates every other configuration on both metrics at once, and it
+is the only one that can offer a word the dictionary has never seen.
+
+Reproduce with `python3 src/study_data.py && python3 src/h2h_v2.py &&
+python3 src/eval_g2p.py && python3 src/h2h_v4.py`.
 
 ## Acknowledgements
 

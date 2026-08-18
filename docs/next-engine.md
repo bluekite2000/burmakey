@@ -259,11 +259,57 @@ carry the structure; data corrects the exceptions. And the rules file is
 ~200 lines that a native speaker can read and fix line by line, which no
 dictionary offers.
 
+## 8. v4: the hybrid, measured
+
+`src/h2h_v4.py`. Construction: v3's rule-generated spellings for every word
+the rules can romanize (the backbone), with attested dictionary spellings
+layered on top where they exist (the correction layer). The correction layer
+is precisely the part that carries the licence; swap its source — e.g. the
+keyboard's consented typing stream — and the architecture is unchanged.
+
+A third scenario joins the two previous ones: **oov**, the 2,706 test words
+(12.0% of real tokens) that the dictionary does not contain at all.
+
+| | canonical | realistic | oov |
+|---|---|---|---|
+| Bagan / TTKeyboard | 4.19 / — | 4.19 / — | 10.50 / — |
+| v1 dictionary + 8 rules | **2.76** / 1.2% | 3.17 / 20.3% | 8.91 / **100%** |
+| v2 dictionary, all variants | 2.87 / 2.0% | **2.88** / **2.1%** | 8.91 / **100%** |
+| v3 rules only | 3.07 / 13.2% | 3.25 / 22.9% | **4.47** / **2.2%** |
+| v4 hybrid | 2.91 / 2.4% | 2.91 / 2.5% | 4.56 / 2.7% |
+
+(taps/word / word-unreachable)
+
+On known words v4 ties v2 within noise. On OOV words — names, new words,
+everything a dictionary can never hold — v1 and v2 simply cannot play: the
+word is never offered, 100% unreachable, and typing it out costs 8.91 taps.
+The rules backbone offers it after 4.5 taps.
+
+### Weighted over the whole corpus (12.0% OOV, realistic spelling)
+
+| engine | taps/word | unreachable |
+|---|---|---|
+| Bagan / TTKeyboard | 4.95 | — |
+| v1 (shipped) | 3.86 | 29.8% |
+| v2 | 3.60 | 13.9% |
+| v3 | 3.40 | 20.4% |
+| **v4 hybrid** | **3.11** | **2.5%** |
+
+**v4 dominates every other engine on both metrics simultaneously.** Against
+the shipped v1 it is 19% fewer taps and twelve times fewer unreachable words;
+against the competitors, −37%. This is the first configuration in the project
+where nothing is traded away: v2's accuracy where data exists, v3's coverage
+where it does not, and the licence exposure confined to a swappable layer.
+
+The standing caveats do not move: spelling behaviour is still modelled from
+attested variants rather than measured from typists, and word frequencies
+still come from myPOS.
+
 ## Reproducing the numbers
 
 ```bash
 git clone https://github.com/ye-kyaw-thu/myG2P /tmp/myg2p
 git clone https://github.com/ye-kyaw-thu/myPOS /tmp/mypos
 cd src && python3 study_data.py && python3 h2h_v2.py
-python3 eval_g2p.py && python3 h2h_v3.py
+python3 eval_g2p.py && python3 h2h_v3.py && python3 h2h_v4.py
 ```
