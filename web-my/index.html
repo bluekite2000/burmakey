@@ -48820,17 +48820,20 @@ function convoHeard(text){
 }
 
 /* ---- the guided test, as a conversation ---- */
-function askSharingThenTest(){
-  /* answering starts the test straight away — the sharing answer is the
-     consent it needed, and every task carries a way out */
-  const after=()=>setTimeout(testStart,900);
+function askSharingThenTest(auto){
+  /* Entry intent decides what follows the sharing answer. Arriving via #test
+     (an invited tester) flows straight into task 1; arriving via the plain
+     URL — including the landing page's "just try the keyboard" — gets an
+     OFFER with a "later", because that link promised the keyboard, not a
+     20-minute assignment. */
+  const after=auto?()=>setTimeout(testStart,900):()=>setTimeout(testOffer,900);
   say("<b>မျှဝေမှု · sharing</b><br>"+
       "သင့်စာသားများ ဖုန်းထဲမှာပဲ ရှိပါမယ် · Your words stay on your phone. "+
       "I only send numbers.<br><br>"+
       "အဘိဓာန် ပိုကောင်းအောင် သင်ရိုက်သည်များကို မျှဝေမလား · "+
-      "May I also send what you type, to improve the dictionary?<br><br>"+
-      "<span class='dim'>ပြီးရင် အလုပ်ငယ် ၁၈ ခု · then 18 short tasks. "+
-      "Stop any time.</span>",[
+      "May I also send what you type, to improve the dictionary?"+
+      (auto?"<br><br><span class='dim'>ပြီးရင် အလုပ်ငယ် ၁၈ ခု · then 18 short "+
+      "tasks. Stop any time.</span>":""),[
     {label:"ဟုတ်ကဲ့ · yes",act:()=>{opt.oov=true;opt.donate=true;
       say("ကျေးဇူးပါ · thank you.");after()}},
     {label:"မသိသည့်စာလုံးများသာ · unknown words only",ghost:true,
@@ -48963,8 +48966,12 @@ setInterval(maybeAsk,20000);
    turns into a close button */
 /* the chat is the only surface now; #test still deep-links into the task */
 function routeHash(){
-  if((location.hash||"").slice(1)==="test"&&!convo.mode&&!msgs.length)
-    setTimeout(testStart,500);
+  if((location.hash||"").slice(1)==="test"&&!convo.mode&&!msgs.length){
+    /* an invited tester: sharing first if they have never answered it,
+       then straight into task 1 */
+    if(!stored(seenKey))setTimeout(()=>askSharingThenTest(true),500);
+    else setTimeout(testStart,500);
+  }
 }
 addEventListener("hashchange",routeHash);
 
@@ -49008,5 +49015,5 @@ drawMsg();
 render();
 routeHash();
 /* first visit: the app introduces itself and offers the test */
-if(!stored(seenKey)&&location.hash.slice(1)!=="test")setTimeout(askSharingThenTest,650);
+if(!stored(seenKey)&&location.hash.slice(1)!=="test")setTimeout(()=>askSharingThenTest(false),650);
 </script></body></html>
