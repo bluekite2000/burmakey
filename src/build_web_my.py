@@ -1,4 +1,4 @@
-data = open("weblex_my.txt").read()
+data = open("weblex_v4.txt").read()
 
 html = r'''<!DOCTYPE html><html lang="my"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
@@ -295,7 +295,9 @@ for(const line of RAW.split("\n")){
   if(i>0){KK.push(line.slice(0,i));LO.push(line.slice(i+1))}
 }
 const pref=new Map();
+const WIDX=new Map();                 // word -> first (best-ranked) line
 for(let i=0;i<KK.length;i++){
+  if(!WIDX.has(LO[i]))WIDX.set(LO[i],i);
   const s=KK[i];
   for(let j=1;j<=s.length;j++){
     const p=s.slice(0,j);
@@ -303,6 +305,28 @@ for(let i=0;i<KK.length;i++){
     if(!a){a=[];pref.set(p,a)}
     if(a.length<50)a.push(i);
   }
+}
+/* QWERTY fat-finger neighbours, for the typo fallback */
+const ADJ={q:'wa',w:'qes',e:'wrd',r:'etf',t:'ryg',y:'tuh',u:'yij',i:'uok',
+ o:'ipl',p:'ol',a:'qsz',s:'adwx',d:'sfec',f:'dgrv',g:'fhtb',h:'gjyn',
+ j:'hkum',k:'jlim',l:'ko',z:'xas',x:'zcsd',c:'xvdf',v:'cbfg',b:'vngh',
+ n:'bmhj',m:'njk'};
+function fuzzyIds(t){
+  /* fires only when the exact prefix matches nothing: edit-distance-1
+     neighbourhood, adjacency-limited substitutions */
+  const qs=new Set();
+  for(let i=0;i<t.length;i++){
+    for(const c of (ADJ[t[i]]||''))qs.add(t.slice(0,i)+c+t.slice(i+1));
+    qs.add(t.slice(0,i)+t.slice(i+1));
+    if(i+1<t.length)qs.add(t.slice(0,i)+t[i+1]+t[i]+t.slice(i+2));
+  }
+  for(let i=0;i<=t.length;i++)
+    for(const c of 'abcdefghijklmnopqrstuvwxyz')
+      qs.add(t.slice(0,i)+c+t.slice(i));
+  const out=[];
+  for(const q of qs)
+    for(const v of norms(q)){const a=pref.get(v);if(a)out.push(...a)}
+  return out;
 }
 const recency=new Map(),bigram=new Map();
 let prev=null,words=[];
@@ -380,9 +404,10 @@ function drawStats(){
 }
 const $=id=>document.getElementById(id);
 function score(i){
+  const w=LO[i];
   let s=1/(i+2);
-  s+=10*(recency.get(i)||0);
-  if(prev!==null){const bg=bigram.get(prev);if(bg)s+=100*(bg.get(i)||0)}
+  s+=10*(recency.get(w)||0);
+  if(prev!==null){const bg=bigram.get(prev);if(bg)s+=100*(bg.get(w)||0)}
   return s;
 }
 function normBase(t){
@@ -404,18 +429,25 @@ function candidates(txt){
   let ids;
   if(!txt){
     ids=new Set();
-    if(prev!==null){const bg=bigram.get(prev);if(bg)for(const i of bg.keys())ids.add(i)}
-    for(const i of recency.keys())ids.add(i);
+    if(prev!==null){const bg=bigram.get(prev);if(bg)
+      for(const w of bg.keys()){const i=WIDX.get(w);if(i!==undefined)ids.add(i)}}
+    for(const w of recency.keys()){const i=WIDX.get(w);if(i!==undefined)ids.add(i)}
     ids=[...ids];
   }else{
     const vs=norms(txt);
     ids=[];
     for(const v of vs) ids.push(...(pref.get(v)||[]));
-    for(const i of recency.keys())
-      if(vs.some(v=>KK[i].startsWith(v)))ids.push(i);
+    if(!ids.length&&txt.length>=3)ids=fuzzyIds(txt);   // typo fallback
     ids=[...new Set(ids)];
   }
-  return ids.sort((a,b)=>score(b)-score(a)).slice(0,5);
+  /* several spellings can reach the same word; show each word once */
+  const seen=new Set(),uniq=[];
+  for(const i of ids.sort((a,b)=>score(b)-score(a))){
+    if(seen.has(LO[i]))continue;
+    seen.add(LO[i]);uniq.push(i);
+    if(uniq.length===5)break;
+  }
+  return uniq;
 }
 function addChip(bar,big,small,act,cls){
   const d=document.createElement("div");d.className="cd"+(cls?" "+cls:"");
@@ -503,13 +535,13 @@ function commit(i,raw,pos,zeroKey){
     if(pos===0)M.top1++;else M.barPick++;
     if(nrm)M.normed++;
     words.push({my:LO[i],rom:KK[i],raw:false});
-    recency.set(i,(recency.get(i)||0)+1);
+    recency.set(LO[i],(recency.get(LO[i])||0)+1);
     if(prev!==null){
       let bg=bigram.get(prev);
       if(!bg){bg=new Map();bigram.set(prev,bg)}
-      bg.set(i,(bg.get(i)||0)+1);
+      bg.set(LO[i],(bg.get(LO[i])||0)+1);
     }
-    prev=i;
+    prev=LO[i];
   }else{
     M.raw++;if(M.oov.length<200)M.oov.push(raw);
     words.push({my:raw,rom:"",raw:true});

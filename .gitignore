@@ -5,6 +5,7 @@ try-burmese.html
 longrun_topics.json
 mm_data.pkl
 weblex_my.txt
+weblex_v4.txt
 # competitor APKs pulled for benchmarking — not ours to redistribute
 apks/
 *.log

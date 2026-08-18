@@ -140,10 +140,45 @@ class EngineV2:
                     v += 60 * self.tagprob.get((t1, t2), 0.0)
         return v
 
-    def type_word(self, target, spelling):
+    # QWERTY fat-finger neighbours, for edit-tolerant lookup
+    ADJ = {'q':'wa','w':'qes','e':'wrd','r':'etf','t':'ryg','y':'tuh','u':'yij',
+           'i':'uok','o':'ipl','p':'ol','a':'qsz','s':'adwx','d':'sfec',
+           'f':'dgrv','g':'fhtb','h':'gjyn','j':'hkum','k':'jlim','l':'ko',
+           'z':'xas','x':'zcsd','c':'xvdf','v':'cbfg','b':'vngh','n':'bmhj',
+           'm':'njk'}
+
+    def _fuzzy_pool(self, prefix):
+        """Pool for a prefix nobody typed on purpose: try the edit-distance-1
+        neighbourhood, adjacency-limited for substitutions. A fuzzy match is
+        weaker evidence, so its weights are damped."""
+        merged = {}
+        cands = set()
+        for i in range(len(prefix)):
+            for c in self.ADJ.get(prefix[i], ''):          # fat-finger sub
+                cands.add(prefix[:i] + c + prefix[i+1:])
+            cands.add(prefix[:i] + prefix[i+1:])           # doubled key / extra
+            if i + 1 < len(prefix):                        # transposition
+                cands.add(prefix[:i] + prefix[i+1] + prefix[i] + prefix[i+2:])
+        for i in range(len(prefix) + 1):                   # missed key
+            for c in 'abcdefghijklmnopqrstuvwxyz':
+                cands.add(prefix[:i] + c + prefix[i:])
+        for q in cands:
+            for w, wt in (self.by_prefix.get(q) or {}).items():
+                v = 0.5 * wt
+                if v > merged.get(w, 0.0):
+                    merged[w] = v
+        return merged
+
+    def type_word(self, target, spelling, fuzzy=True):
         """Return taps needed, and whether the target was reachable at all."""
         for k in range(0, len(spelling) + 1):
             pool = self.by_prefix.get(spelling[:k])
+            if not pool and fuzzy and k >= 3:
+                # Fallback ONLY: merging the fuzzy pool unconditionally was
+                # measured and rejected — it cost the clean path 0.27 taps and
+                # tripled its miss rate. A typo that lands on a valid prefix
+                # stays unrecovered; never taxing correct typing is worth it.
+                pool = self._fuzzy_pool(spelling[:k])
             if not pool:
                 continue
             ranked = sorted(pool.items(), key=lambda kv: -self.score(kv[0], kv[1]))

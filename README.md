@@ -128,7 +128,8 @@ python3 burmese2.py       # iteration 2: syllable romanizer, 87.3% coverage, hea
 python3 h2h_mobile.py --sweep   # head-to-head vs Bagan/TTKeyboard, mobile cost model
 python3 longrun.py        # long-horizon learning dynamics (24 users x 20 days)
 python3 mm_chat.py        # chat-register simulation (needs mm_data.pkl, see below)
-python3 build_web_my.py   # regenerate the web keyboard (needs weblex_my.txt, see below)
+python3 build_weblex_v4.py # emit the v4 hybrid lexicon (weblex_v4.txt)
+python3 build_web_my.py   # regenerate the web keyboard from it
 ```
 
 Only the standard library is needed. Re-runs are not bit-identical: the
