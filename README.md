@@ -176,7 +176,19 @@ alternation real typists vary on. myG2P's IPA column and myPOS's POS tags are
 never touched at all, though 29.6% of held-out word bigrams are unseen in
 training where POS bigrams cover 100%.
 
-Reproduce with `python3 src/study_data.py`.
+**v2 was then built and measured** (`src/engine_v2.py`, `src/h2h_v2.py`).
+Indexing every attested spelling makes the engine nearly indifferent to how
+someone spells: **2.88 taps/word whether they use the canonical spelling or a
+real variant.** The shipped engine needs 2.76 in the idealised case but 3.17
+once spelling varies — and **20.3% of words become unreachable**, never offered
+as a candidate at all, so the reader receives Latin instead of Burmese. Against
+the competitors' measured 4.19, v2 is −31%.
+
+The POS-class backoff proposed in the same document **did not work** — 2.87
+without it, 2.88 with. The sparsity it targeted is real; 16 tags are too coarse
+to exploit it. That section is marked wrong rather than removed.
+
+Reproduce with `python3 src/study_data.py && python3 src/h2h_v2.py`.
 
 ## Acknowledgements
 

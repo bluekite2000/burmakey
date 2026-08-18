@@ -1,0 +1,38 @@
+{
+ "canonical": {
+  "v1": {
+   "taps": 54914,
+   "words": 19898,
+   "miss": 237
+  },
+  "v2": {
+   "taps": 57271,
+   "words": 19898,
+   "miss": 409
+  },
+  "v2np": {
+   "taps": 57125,
+   "words": 19898,
+   "miss": 401
+  },
+  "competitor": 4.192582169062217
+ },
+ "realistic": {
+  "v1": {
+   "taps": 63102,
+   "words": 19898,
+   "miss": 4044
+  },
+  "v2": {
+   "taps": 57363,
+   "words": 19898,
+   "miss": 431
+  },
+  "v2np": {
+   "taps": 57193,
+   "words": 19898,
+   "miss": 426
+  },
+  "competitor": 4.192582169062217
+ }
+}

@@ -154,10 +154,60 @@ lexicon, not a 24k-word dictionary memorised wholesale.
 3. Settle the licence before any of the rest.
 4. Then FST + KenLM + Rust, as one engine.
 
+## 6. Built and measured
+
+v2 was implemented (`src/engine_v2.py`) and compared against the shipped engine
+and the competitors on the same 19,898 held-out words (`src/h2h_v2.py`).
+
+The comparison is run twice, because which scenario you choose decides the
+answer:
+
+- **canonical** — the user types the one spelling v1's lexicon expects. This is
+  what the original study assumed, and it flatters v1.
+- **realistic** — the user types one of the spellings myG2P attests for that
+  word, sampled by how often it is attested.
+
+| | input | taps/word | word unreachable |
+|---|---|---|---|
+| Bagan / TTKeyboard | — | 4.19 | — |
+| BurmaKey v1 | canonical | 2.76 | 1.2% |
+| BurmaKey v2 | canonical | 2.88 | 2.1% |
+| BurmaKey v1 | **realistic** | 3.17 | **20.3%** |
+| BurmaKey v2 | **realistic** | **2.88** | **2.2%** |
+
+**v2 is almost invariant to how the user spells** — 2.87 taps whichever
+scenario it is asked to handle. v1 is not: it needs 15% more taps, and
+**one word in five becomes unreachable**, meaning the candidate is never
+offered at all and the word is typed out as raw Latin. The reader then
+receives Burglish rather than Burmese, which is the entire premise of the
+project failing quietly.
+
+The price is 4% more taps in the idealised case (2.87 vs 2.76). That is the
+right trade: the idealised case is the one that does not happen.
+
+### The POS backoff does not work
+
+Ablation says so plainly: variants alone give 2.87, variants plus POS give
+2.88 — no gain, marginally worse. **Section 2.3 of this document was wrong.**
+The 29.6% bigram sparsity is real, but 16 tags over 180 bigram types is too
+coarse to discriminate: `part` follows almost everything, so the class prior
+carries little information that word frequency does not already hold.
+
+Keep the finding, drop the remedy. A useful backoff would need either a finer
+tagset or a genuine class-based LM learned from the data rather than the
+supplied tags.
+
+### What this does not settle
+
+Both engines are scored against a *model* of how people spell — myG2P's
+attested variants, sampled by frequency. That is a far better model than
+assuming one canonical spelling, but it is still not measured from Burmese
+typists. The guided test in the keyboard is what would replace it with data.
+
 ## Reproducing the numbers
 
 ```bash
 git clone https://github.com/ye-kyaw-thu/myG2P /tmp/myg2p
 git clone https://github.com/ye-kyaw-thu/myPOS /tmp/mypos
-cd src && python3 study_data.py
+cd src && python3 study_data.py && python3 h2h_v2.py
 ```
