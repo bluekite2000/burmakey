@@ -48641,7 +48641,7 @@ function drawMsg(){
     const e=document.createElement("div");e.className="empty";
     e.innerHTML="<b>သင့်စာသား ဒီမှာပေါ်မယ်</b>your message appears here — "+
       "type Burglish below, tap the word you meant."+
-      "<br><br>Type <b>help</b> for the keys.";
+      "<br><br>Type <b>help</b> for the keys · <b>test</b> for the guided test.";
     t.appendChild(e);
   }else{
     const d=document.createElement("div");d.className="daypill";
@@ -48703,6 +48703,10 @@ function sendMsg(){
     words=[];prev=null;drawMsg();render();sayKeys();
     $("inp").focus({preventScroll:true});return;
   }
+  if(!convo.mode&&TESTWORDS.includes(t.trim().toLowerCase())){
+    words=[];prev=null;drawMsg();render();testOffer();
+    $("inp").focus({preventScroll:true});return;
+  }
   heard(t,words.map(w=>w.rom||w.my).join(" "));
   words=[];prev=null;
   navigator.clipboard.writeText(t).catch(()=>{});
@@ -48732,8 +48736,12 @@ $("inp").addEventListener("keydown",e=>{
   }
   if(e.key===" "||e.key==="Enter"){
     e.preventDefault();
-    if(HELPWORDS.includes($("inp").value.trim().toLowerCase())&&!words.length){
+    const cmd=$("inp").value.trim().toLowerCase();
+    if(HELPWORDS.includes(cmd)&&!words.length){
       $("inp").value="";render();sayKeys();return;
+    }
+    if(TESTWORDS.includes(cmd)&&!words.length&&!convo.mode){
+      $("inp").value="";render();testOffer();return;
     }
     const txt=$("inp").value.trim().toLowerCase().replace(/[^a-z]/g,"");
     if(!txt){
@@ -48751,6 +48759,7 @@ $("inp").addEventListener("keydown",e=>{
 
 /* typing "help" is the whole help system: no menu, no screen */
 const HELPWORDS=["help","?","အကူအညီ"];
+const TESTWORDS=["test","စမ်း"];
 function sayKeys(){
   say("<b>ခလုတ်များ · the keys</b><br>You use your phone's own keyboard — "+
       "there is no new layout to learn.<br><br>"+
@@ -48760,7 +48769,8 @@ function sayKeys(){
       "<b>123</b> — offers ၀-၉ or 0-9<br>"+
       "<b>. ,</b> — offers ။ and ၊, also always on the strip<br>"+
       "<b>space twice</b> — a real space, for mixing English in<br><br>"+
-      "<span class='dim'>Type <b>help</b> any time to see this again.</span>");
+      "<span class='dim'>Type <b>help</b> any time to see this again, or "+
+      "<b>test</b> to take the guided test.</span>");
 }
 /* ================= the conversation ================= */
 const convo={mode:null,i:0,rows:[],answers:[],snap:null,t0:0,typed:[]};
