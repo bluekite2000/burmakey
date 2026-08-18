@@ -2,7 +2,14 @@ data = open("weblex_v4.txt").read()
 
 html = r'''<!DOCTYPE html><html lang="my"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<title>မြန်မာစာရိုက် — type Burmese with English letters</title><style>
+<title>မြန်မာစာရိုက် — type Burmese with English letters</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BurmaKey">
+<meta name="theme-color" content="#202c33"><style>
 :root{
 --bg:#0b141a;          /* thread */
 --head:#202c33;        /* chat header + compose bar */
@@ -264,7 +271,7 @@ a{color:#53bdeb}
   <div class="composerow">
    <div class="pillwrap">
     <button class="ico" id="undobtn" onclick="undo()"
-     aria-label="ပြန်ဖျက် · undo last word" title="ပြန်ဖျက် · undo">↩</button>
+     aria-label="ပြန်ဖျက် · undo last word" title="ပြန်ဖျက် · undo">&#x21A9;&#xFE0E;</button>
     <input type="text" id="inp" autocomplete="off" autocorrect="off"
      autocapitalize="none" spellcheck="false" inputmode="text" enterkeyhint="send"
      placeholder="စာရိုက်ပါ · message">
@@ -707,6 +714,11 @@ function assembleItems(){
     .concat([EX_FREE,EX_FREE,EX_FREE]);
 }
 assembleItems();
+/* tapping the conversation (not a bubble or button) puts the keyboard
+   away, the way chat apps behave; tapping a message still copies it */
+$("thread").addEventListener("click",e=>{
+  if(!e.target.closest(".bub,button"))$("inp").blur();
+});
 $("inp").addEventListener("input",render);
 $("inp").addEventListener("keydown",e=>{
   /* backspace on an empty box deletes the last committed word, which is what
@@ -758,6 +770,9 @@ function sayKeys(){
       "<b>123</b> — offers ၀-၉ or 0-9<br>"+
       "<b>. ,</b> — offers ။ and ၊, also always on the strip<br>"+
       "<b>space twice</b> — a real space, for mixing English in<br><br>"+
+      "<span class='dim'>ဖုန်းပင်မစာမျက်နှာသို့ ထည့်ပါ · Add to Home Screen (Share "+
+      "→ Add to Home Screen) to use it full-screen, without the browser "+
+      "bars.</span><br><br>"+
       "<span class='dim'>Type <b>help</b> any time to see this again, or "+
       "<b>test</b> to take the guided test.</span>");
 }
