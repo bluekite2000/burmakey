@@ -595,6 +595,81 @@ real syntax rather than from the lexicon: scramble the word order and the
 bigram prior stops paying. Real chat sits between this floor and the +18%
 measured on real sentences.</p>
 
+<h2>The engine, rebuilt: real spellings, rules, and the hybrid</h2>
+<p class="sub">Everything above measured the engine as first built. Studying
+the data it stands on exposed a flaw, and fixing it produced a better engine —
+which is what the try-it keyboard now runs.</p>
+
+<p>The original engine accepted <b>one</b> spelling per word plus eight
+hand-written rules. But the source dictionary itself attests about nine
+spellings per word — Burmese voicing means သ is written <i>tha</i> or
+<i>dha</i>, က is <i>ka</i> or <i>ga</i> — and the pipeline was discarding
+18% of that evidence. Measured consequence: the shipped rules accepted only
+<b>10.8%</b> of the spellings the dictionary itself attests. A user who wrote
+<i>dha</i> got nothing at all.</p>
+
+<p>A word the engine cannot offer is <b>unreachable</b>: it never appears in
+the suggestion bar, falls through as raw Latin, and the reader receives
+Burglish — the exact failure this project exists to prevent. Taps hide it;
+it is the more important number.</p>
+
+<figure class="chart">
+<figcaption>Four engines, three input scenarios — taps/word and unreachable</figcaption>
+<p class="csub">Same 19,898 held-out words. <b>canonical</b>: the user types
+the one spelling the original engine expects. <b>realistic</b>: a spelling the
+dictionary actually attests. <b>oov</b>: the 2,706 words (12% of real tokens)
+no dictionary contains.</p>
+<div class="scroll-x">
+<table>
+<thead><tr><th>Engine</th><th>canonical</th><th>realistic</th><th>oov</th></tr></thead>
+<tbody>
+<tr><td>Bagan / TTKeyboard (measured)</td><td>4.19 / —</td><td>4.19 / —</td><td>10.50 / —</td></tr>
+<tr><td>v1 — as first built</td><td><b>2.76</b> / 1.2%</td><td>3.17 / <b>20.3%</b></td><td>8.91 / <b>100%</b></td></tr>
+<tr><td>v2 — all attested spellings</td><td>2.87 / 2.0%</td><td><b>2.88</b> / <b>2.1%</b></td><td>8.91 / <b>100%</b></td></tr>
+<tr><td>v3 — original rule-based G2P, no dictionary</td><td>3.07 / 13.2%</td><td>3.25 / 22.9%</td><td><b>4.47</b> / <b>2.2%</b></td></tr>
+<tr><td><b>v4 — hybrid: rules + attested</b></td><td>2.91 / 2.4%</td><td>2.91 / 2.5%</td><td>4.56 / 2.7%</td></tr>
+</tbody></table></div>
+<details class="tbl"><summary>Weighted over the whole corpus (12% oov, realistic spelling)</summary>
+<div class="scroll-x"><table>
+<thead><tr><th>Engine</th><th>taps/word</th><th>unreachable</th></tr></thead>
+<tbody>
+<tr><td>Bagan / TTKeyboard</td><td>4.95</td><td>—</td></tr>
+<tr><td>v1</td><td>3.86</td><td>29.8%</td></tr>
+<tr><td>v2</td><td>3.60</td><td>13.9%</td></tr>
+<tr><td>v3</td><td>3.40</td><td>20.4%</td></tr>
+<tr><td><b>v4</b></td><td><b>3.11</b></td><td><b>2.5%</b></td></tr>
+</tbody></table></div></details>
+</figure>
+
+<div class="callout">
+<p><b>The hybrid dominates on both metrics at once.</b> v2 indexes every
+attested spelling, so it is nearly indifferent to how the user writes — but
+like v1 it is structurally blind to words outside its dictionary. v3 is a
+~200-line rule-based G2P written from the orthography itself (85.8% syllable
+accuracy against gold, licence-clean, and it romanizes <i>any</i> Burmese
+string, including names) — but rules alone miss curated exceptions. v4 layers
+attested spellings over the rules backbone: v2&rsquo;s accuracy where data
+exists, v3&rsquo;s coverage where it does not. Against the engine this study
+originally measured: <b>19% fewer taps and twelve times fewer unreachable
+words.</b></p>
+<p>One negative result, kept on the record: a POS-class bigram backoff was
+proposed, built, and measured at no gain — 16 tags are too coarse to help.</p>
+</div>
+
+<p><b>Typos.</b> All of the above assumes a perfect typist. One simulated
+fat-finger per word made 43.7% of words unreachable; an edit-distance-1
+fallback (adjacency-weighted, firing only when the exact prefix dies) cuts
+that to <b>25.2%</b> with the clean path untouched. Merging fuzzy matches
+into every lookup recovered more typos but taxed correct typing — measured,
+and rejected.</p>
+
+<p class="sub">The try-it keyboard runs v4 with the typo fallback: 19,928
+words, 48,035 spellings, 0.2 ms per keystroke. Full data study and every
+figure: <code>docs/next-engine.md</code>, reproducible via
+<code>src/h2h_v4.py</code>. Spelling behaviour is still modelled from
+attested variants rather than measured from typists — the guided test in the
+keyboard is what closes that.</p>
+
 <h2>What happens after day one</h2>
 <p class="sub">The engine learns on the device. Every result above is a single
 pass with fresh state, so none of it can say what that learning is worth over
@@ -913,7 +988,7 @@ prediction and the learning all stay on your device, and your message text is
 never sent anywhere. What the project needs now is not more engineering but
 Burmese eyes on the output.</p>
 <p>
-<a class="cta mm" href="../web-my/">စမ်းကြည့်ပါ · Try the keyboard</a>
+<a class="cta mm" href="../web-my/">စမ်းကြည့်ပါ · Try the keyboard (runs v4)</a>
 <a class="cta ghost" href="../demos/burmese-race.html">Watch the typing race</a>
 </p>
 
