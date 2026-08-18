@@ -164,6 +164,20 @@ Read them top to bottom; each file's docstring says what question it answers.
 - The Burmese UI text in `index.html` and `web-my/index.html` has not been
   reviewed by a native speaker.
 
+## What to build next
+
+[docs/next-engine.md](docs/next-engine.md) studies the two datasets this
+project stands on and proposes the engine that should replace the current one.
+The measured headline: **the shipped variant normaliser accepts 10.8% of the
+Burglish spellings myG2P itself attests, and rejects 89.2%** — including `ga`,
+`da`, `dha`, `ba`. The romanizer keeps only the most frequent spelling per
+syllable and discards 18.3% of the evidence, which is precisely the voicing
+alternation real typists vary on. myG2P's IPA column and myPOS's POS tags are
+never touched at all, though 29.6% of held-out word bigrams are unseen in
+training where POS bigrams cover 100%.
+
+Reproduce with `python3 src/study_data.py`.
+
 ## Acknowledgements
 
 - **Ye Kyaw Thu et al.** — [myG2P](https://github.com/ye-kyaw-thu/myG2P) v2
