@@ -48880,6 +48880,7 @@ function fbStart(){
 }
 function askQ(){
   const q=FB_Q[convo.i];
+  if(!q)return fbFinish();     // two fast answers can race past the last question
   const acts=(q.acts||[]).map(a=>({label:a.label,act:()=>{thumb(a.v);fbHeard(a.label,true)}}));
   acts.push({label:"ကျော် · skip",ghost:true,act:()=>fbHeard("",true)});
   say(q.q,acts);
