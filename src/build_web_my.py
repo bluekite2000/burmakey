@@ -719,7 +719,27 @@ assembleItems();
 $("thread").addEventListener("click",e=>{
   if(!e.target.closest(".bub,button"))$("inp").blur();
 });
-$("inp").addEventListener("input",render);
+/* Commands work regardless of the draft: someone typing "help" with words
+   already committed still wants help, not the word "help" in their message.
+   The draft is left untouched. Also caught on the input event, because iOS
+   sometimes delivers the space bar as a literal character with no keydown. */
+function runCommand(vRaw){
+  const cmd=vRaw.trim().toLowerCase();
+  if(HELPWORDS.includes(cmd)){
+    $("inp").value="";render();sayKeys();
+    $("inp").focus({preventScroll:true});return true;
+  }
+  if(TESTWORDS.includes(cmd)&&!convo.mode){
+    $("inp").value="";render();testOffer();
+    $("inp").focus({preventScroll:true});return true;
+  }
+  return false;
+}
+$("inp").addEventListener("input",()=>{
+  const v=$("inp").value;
+  if(v.endsWith(" ")&&runCommand(v))return;   // space arrived as a character
+  render();
+});
 $("inp").addEventListener("keydown",e=>{
   /* backspace on an empty box deletes the last committed word, which is what
      every native IME does and the only way to fix a mis-picked word without
@@ -737,13 +757,7 @@ $("inp").addEventListener("keydown",e=>{
   }
   if(e.key===" "||e.key==="Enter"){
     e.preventDefault();
-    const cmd=$("inp").value.trim().toLowerCase();
-    if(HELPWORDS.includes(cmd)&&!words.length){
-      $("inp").value="";render();sayKeys();return;
-    }
-    if(TESTWORDS.includes(cmd)&&!words.length&&!convo.mode){
-      $("inp").value="";render();testOffer();return;
-    }
+    if(runCommand($("inp").value))return;
     const txt=$("inp").value.trim().toLowerCase().replace(/[^a-z]/g,"");
     if(!txt){
       const rest=$("inp").value.trim();
