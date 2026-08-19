@@ -48610,6 +48610,7 @@ function msgText(){
     if(i>0){
       const pv=words[i-1];
       if(!pv.space&&!w.punct&&(w.raw||pv.raw))s+=" ";
+      else if(pv.punct&&!w.punct&&!pv.space)s+=" ";   // standard Burmese spaces after ။ and ၊
     }
     s+=w.my;
   }
