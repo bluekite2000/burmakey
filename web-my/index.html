@@ -127,8 +127,12 @@ margin-top:1px;line-height:1.4}
 .bub .ck{color:var(--tick);letter-spacing:-2px;margin-left:2px}
 .bub.draft{background:#0c4b3f;border:1px dashed #1c7963;opacity:.97}
 .bub.draft .meta{color:#7fae9f}
-.bub.copied::after{content:"✓ ကူးပြီး · copied";position:absolute;right:0;
-bottom:-19px;font-size:11px;color:var(--acc);white-space:nowrap}
+/* the confirmation sits ON the bubble — placed below it, it slid under the
+   next bubble or the suggestion strip and read as a background glitch */
+.bub.copied::after{content:"✓ ကူးပြီး · copied";position:absolute;
+left:50%;top:50%;transform:translate(-50%,-50%);
+background:rgba(6,20,16,.92);color:#7ce3c3;border:1px solid #1c7963;
+border-radius:9px;padding:5px 11px;font-size:12px;white-space:nowrap;z-index:3}
 @media(hover:hover){.bub.out{cursor:pointer}}
 
 /* ---------- compose bar ---------- */
