@@ -28,11 +28,13 @@ text-decoration:none;min-height:52px;line-height:22px;touch-action:manipulation}
 /* demo */
 .demo{background:var(--pan);border:1px solid var(--ln);border-radius:18px;
 max-width:420px;margin:38px auto 0;padding:18px;text-align:left}
-.dmsg{min-height:52px;font-size:24px;line-height:1.7;padding:4px 2px 10px;
+.dmsg{height:56px;overflow:hidden;font-size:24px;line-height:1.7;padding:4px 2px 10px;
 border-bottom:1px solid var(--ln);word-break:break-word}
-.dbar{display:flex;gap:7px;min-height:56px;align-items:center;padding:9px 0 4px;
-overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
-overscroll-behavior-x:contain}
+/* fixed height: the card must not breathe as candidates come and go, or
+   everything below the demo jumps with the animation */
+.dbar{display:flex;gap:7px;height:83px;align-items:center;padding:9px 0 4px;
+overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
+-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
 .dbar::-webkit-scrollbar{display:none}
 .dcd{flex:0 0 auto}
 .dcd{background:#1d222c;border:1px solid var(--ln);border-radius:9px;
