@@ -2,6 +2,7 @@ package com.burmakey.ime;
 
 import android.inputmethodservice.InputMethodService;
 import android.view.View;
+import android.view.MotionEvent;
 import android.view.inputmethod.EditorInfo;
 import android.text.InputType;
 import android.view.inputmethod.InputConnection;
@@ -41,6 +42,7 @@ public class BurmaKeyService extends InputMethodService {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Color.parseColor("#0b141a"));
         root.setPadding(6, 6, 6, 14);
+        root.setClipChildren(false); root.setClipToPadding(false);
 
         HorizontalScrollView sv = new HorizontalScrollView(this);
         sv.setHorizontalScrollBarEnabled(false);
@@ -52,6 +54,7 @@ public class BurmaKeyService extends InputMethodService {
 
         keyArea = new LinearLayout(this);
         keyArea.setOrientation(LinearLayout.VERTICAL);
+        keyArea.setClipChildren(false); keyArea.setClipToPadding(false);
         root.addView(keyArea);
         buildKeys();
         drawBar();
@@ -143,16 +146,35 @@ public class BurmaKeyService extends InputMethodService {
         return row;
     }
     private String disp(char ch) { return shift ? String.valueOf(Character.toUpperCase(ch)) : String.valueOf(ch); }
-    private LinearLayout newRow() { LinearLayout r = new LinearLayout(this); r.setOrientation(LinearLayout.HORIZONTAL); return r; }
+    private LinearLayout newRow() { LinearLayout r = new LinearLayout(this); r.setOrientation(LinearLayout.HORIZONTAL); r.setClipChildren(false); r.setClipToPadding(false); return r; }
+
+    private static final int KEY_BG = Color.parseColor("#2a3942");
+    private static final int KEY_BG_DOWN = Color.parseColor("#5b6b75");
 
     private Button key(String label, float weight, Runnable action) {
         Button b = new Button(this);
         b.setText(label); b.setAllCaps(false);
         b.setTextColor(Color.parseColor("#e9edef"));
-        b.setBackgroundColor(Color.parseColor("#2a3942"));
+        b.setBackgroundColor(KEY_BG);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, weight);
         lp.setMargins(3, 3, 3, 3); b.setLayoutParams(lp);
         b.setOnClickListener(v -> action.run());
+        // brief key "pop" on touch, like a native keyboard
+        b.setOnTouchListener((v, e) -> {
+            switch (e.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    v.setBackgroundColor(KEY_BG_DOWN);
+                    v.setTranslationZ(dp(8));
+                    v.animate().scaleX(1.28f).scaleY(1.28f).translationY(-dp(10)).setDuration(35).start();
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    v.animate().scaleX(1f).scaleY(1f).translationY(0).setDuration(70)
+                     .withEndAction(() -> { v.setBackgroundColor(KEY_BG); v.setTranslationZ(0); }).start();
+                    break;
+            }
+            return false;   // don't consume — let onClick fire
+        });
         return b;
     }
 
