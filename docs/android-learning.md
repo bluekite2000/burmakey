@@ -47,6 +47,16 @@ A keyboard that fits the individual within a day, with zero data leaving the
 phone and no consent dialog — because nothing is shared. This is the default
 and, for most users, the entire story.
 
+### Build Tier 1 so Tier 3 is an update, not a rewrite
+
+The one forward-compatibility decision, and it costs nothing now: express the
+learned state as **parameters that can be diffed and averaged**, not ad-hoc
+counters. If Tier-1 learning is a set of numeric weights over a fixed feature
+space, Tier 3 is "compute the delta on that state, add DP noise, send it" — a
+pure addition. If it is bespoke counter structures, Tier 3 forces the whole
+learning layer to be rewritten. Decide the shape here; build nothing else for
+Tier 3 yet.
+
 ---
 
 ## Tier 2 — consented aggregate telemetry (opt-in, derived numbers only)
@@ -79,9 +89,26 @@ tally, decoupled from the words it came from.
 - **One-tap withdraw**, and a visible log of what a submission contained.
 
 This is the same consent model already built and tested in the web keyboard;
-it ports directly. It is also the path that finally **replaces myPOS** — a
-population spelling table you own, grown from consented use, is the corpus that
-frees the engine from the NC licence.
+it ports directly.
+
+**What this frees, and what it does not.** Syllable-spelling counts give you an
+owned *variant table* — they replace the myG2P-derived spelling weighting. They
+do **not** replace myPOS, which supplies word frequencies, bigrams, and a
+language model that syllable counts never touch. Escaping myPOS is a higher rung
+on a sensitivity spectrum:
+
+| consent-collect | sensitivity | frees you from |
+|---|---|---|
+| syllable spelling counts | low — safe as specced above | variant weighting (myG2P) |
+| word frequency counts | medium — needs min-count + noise | the frequency model (myPOS) |
+| typed word→word pairs, in order | **high** — text-adjacent | the chat corpus itself |
+
+The third rung is the chat-register corpus the study calls otherwise
+unobtainable. Tier 2's "derived counts, never text" deliberately does **not**
+collect it. Reaching it means either the explicit, prominent, off-by-default
+"donate my typing" opt-in (which sends `[burglish, word]` pairs — use sparingly)
+or Tier 3, which learns the language model from that text without the text ever
+leaving the phone.
 
 ---
 
@@ -102,6 +129,15 @@ DP is the mathematical guarantee that turns "trust us, it's aggregated" into
 "provably cannot be de-anonymised." It sits at the moment of departure: local
 update computed → noise added → sent. Everything before the noise stays on the
 phone.
+
+**Gated on scale, not just effort.** Federated learning is meaningless below a
+large userbase: with tens or hundreds of users there are too few updates to
+average, and the DP noise swamps the signal. It starts paying only at the
+thousands-of-active-users level. So Tier 3 is blocked on having the userbase
+that makes it work — one more reason it is last, and one more reason to ship
+Tiers 1–2 and grow first. The client change is an ordinary app update (a version
+bump, not a new app); the real weight is the server-side aggregation
+infrastructure.
 
 ---
 
