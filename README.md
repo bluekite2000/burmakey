@@ -167,6 +167,8 @@ Read them top to bottom; each file's docstring says what question it answers.
 
 ## What to build next
 
+**Android plan.** [docs/android-learning.md](docs/android-learning.md) specifies how an Android IME self-improves without passive collection: per-user on-device learning by default (persistent spelling/vocabulary, nothing leaves the phone), consented aggregate telemetry that sends derived syllable counts and never text, and optional federated learning with differential privacy. Secure fields (passwords, OTP) are excluded at every tier.
+
 [docs/next-engine.md](docs/next-engine.md) studies the two datasets this
 project stands on and proposes the engine that should replace the current one.
 The measured headline: **the shipped variant normaliser accepts 10.8% of the
