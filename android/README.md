@@ -23,9 +23,15 @@ the 48k-line v4 lexicon ships as an APK asset.
 - [x] IME registers, appears, commits text into other apps  (this skeleton)
 - [x] v4 engine ported to Java: Burglish in, Burmese out
 - [x] suggestion bar + candidate ranking
-- [ ] number/symbol pages, shift, cursor + selection, inputType handling
-- [ ] Tier-1 on-device learning + pruning  (see docs/android-learning.md)
+- [x] number/symbol pages (Latin digits + Burmese numerals ၀-၉ + ။ ၊ punctuation)
+- [x] one-shot shift (uppercase)
+- [x] buffer reset on new field (onStartInputView) — no draft leaks between fields
+- [x] Tier-1 on-device learning: recency + bigram + personal vocab, persisted to files/learn.tsv, pruned to caps
+- [x] secure-field guard — no learning in password / OTP inputs
+- [ ] cursor + selection handling (arrow keys, tap-to-move)
+- [ ] long-press for numbers/accents on the letter page
 
-Next: number/symbol pages, shift, cursor + selection, inputType handling, and
-Tier-1 on-device learning with pruning (docs/android-learning.md). The core —
-type Burglish, get ranked Burmese, commit clean Unicode into any app — works.
+Next: cursor + selection (arrow keys, tap-to-move) and long-press for
+numbers/accents on the letter page. The core — type Burglish, get ranked
+Burmese, commit clean Unicode, and learn your word preferences on-device
+(nothing leaves the phone) — works and is verified on the emulator.

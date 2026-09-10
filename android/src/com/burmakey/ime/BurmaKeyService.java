@@ -2,6 +2,8 @@ package com.burmakey.ime;
 
 import android.inputmethodservice.InputMethodService;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.text.InputType;
 import android.view.inputmethod.InputConnection;
 import android.widget.Button;
 import android.widget.HorizontalScrollView;
@@ -9,32 +11,33 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.graphics.Color;
 import android.util.TypedValue;
+import java.io.File;
 import java.util.List;
 
-/**
- * BurmaKey IME with the v4 engine wired in.
- *
- * Type Burglish; the candidate bar shows Burmese words; tap one (or press
- * space) to commit real Unicode into the focused field. This is the web
- * keyboard's core loop, on Android.
- */
 public class BurmaKeyService extends InputMethodService {
 
-    private static final String[] ROWS = {"qwertyuiop", "asdfghjkl", "zxcvbnm"};
     private final Engine engine = new Engine();
-    private final StringBuilder buf = new StringBuilder();   // Burglish being typed
-    private LinearLayout bar;                                 // candidate strip
-    private List<Integer> cands;
+    private final StringBuilder buf = new StringBuilder();
+    private LinearLayout root, bar, keyArea;
+    private List<Engine.Cand> cands;
+    private boolean shift = false;      // one-shot uppercase
+    private boolean symbols = false;    // number/symbol page
+    private boolean noLearn = false;    // password/OTP field: never learn
+    private File stateFile;
+
+    private static final String[] LETTERS = {"qwertyuiop", "asdfghjkl", "zxcvbnm"};
 
     @Override
     public void onCreate() {
         super.onCreate();
-        try { engine.load(getAssets().open("weblex_v4.txt")); } catch (Exception e) { /* keys still work */ }
+        stateFile = new File(getFilesDir(), "learn.tsv");
+        try { engine.load(getAssets().open("weblex_v4.txt")); } catch (Exception ignored) {}
+        engine.loadState(stateFile);       // remember prior sessions
     }
 
     @Override
     public View onCreateInputView() {
-        LinearLayout root = new LinearLayout(this);
+        root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Color.parseColor("#0b141a"));
         root.setPadding(6, 6, 6, 14);
@@ -47,42 +50,108 @@ public class BurmaKeyService extends InputMethodService {
         sv.addView(bar);
         root.addView(sv);
 
-        for (String row : ROWS) root.addView(letterRow(row));
-        root.addView(bottomRow());
+        keyArea = new LinearLayout(this);
+        keyArea.setOrientation(LinearLayout.VERTICAL);
+        root.addView(keyArea);
+        buildKeys();
         drawBar();
         return root;
     }
 
-    // ---- key rows -------------------------------------------------------
+    @Override
+    public void onStartInputView(EditorInfo info, boolean restarting) {
+        super.onStartInputView(info, restarting);
+        buf.setLength(0);            // never leak a draft between fields
+        shift = false;
+        boolean wasSymbols = symbols;
+        symbols = false;
+        noLearn = isSecure(info);    // no on-device learning in secure fields
+        if (wasSymbols) buildKeys();
+        drawBar();
+    }
+
+    private boolean isSecure(EditorInfo info) {
+        if (info == null) return false;
+        int cls = info.inputType & InputType.TYPE_MASK_CLASS;
+        int var = info.inputType & InputType.TYPE_MASK_VARIATION;
+        if (cls == InputType.TYPE_CLASS_TEXT) {
+            if (var == InputType.TYPE_TEXT_VARIATION_PASSWORD
+             || var == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+             || var == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD) return true;
+        }
+        if (cls == InputType.TYPE_CLASS_NUMBER
+         && var == InputType.TYPE_NUMBER_VARIATION_PASSWORD) return true;
+        return false;
+    }
+
+    @Override
+    public void onFinishInput() {
+        super.onFinishInput();
+        flushBuffer();
+        engine.endMessage();
+        engine.saveState(stateFile);       // persist learning when a field closes
+    }
+
+    // ---- key layouts ----------------------------------------------------
+    private void buildKeys() {
+        keyArea.removeAllViews();
+        if (symbols) buildSymbols(); else buildLetters();
+    }
+
+    private void buildLetters() {
+        keyArea.addView(letterRow(LETTERS[0]));
+        keyArea.addView(letterRow(LETTERS[1]));
+        LinearLayout r3 = newRow();
+        r3.addView(key(shift ? "⇧" : "⇧", 1.5f, this::toggleShift));
+        for (char c : LETTERS[2].toCharArray()) { final char ch = c; r3.addView(key(disp(ch), 1f, () -> onLetter(ch))); }
+        r3.addView(key("⌫", 1.5f, this::onBackspace));
+        keyArea.addView(r3);
+        LinearLayout r4 = newRow();
+        r4.addView(key("123", 1.5f, this::toggleSymbols));
+        r4.addView(key("space", 4f, this::onSpace));
+        r4.addView(key(".", 1f, () -> onSymbol(".")));
+        r4.addView(key("↵", 1.5f, this::onEnter));
+        keyArea.addView(r4);
+    }
+
+    private void buildSymbols() {
+        keyArea.addView(symRow("1234567890"));           // Latin digits
+        keyArea.addView(symRow("၁၂၃၄၅၆၇၈၉၀"));            // Burmese numerals
+        LinearLayout r3 = newRow();
+        for (String s : new String[]{"။", "၊", ".", ",", "?", "!", "@", "-"})
+            r3.addView(key(s, 1f, () -> onSymbol(s)));
+        r3.addView(key("⌫", 1.5f, this::onBackspace));
+        keyArea.addView(r3);
+        LinearLayout r4 = newRow();
+        r4.addView(key("ABC", 1.5f, this::toggleSymbols));
+        r4.addView(key("space", 4f, this::onSpace));
+        r4.addView(key("↵", 1.5f, this::onEnter));
+        keyArea.addView(r4);
+    }
+
     private LinearLayout letterRow(String letters) {
         LinearLayout row = newRow();
-        for (int i = 0; i < letters.length(); i++) {
-            final char ch = letters.charAt(i);
-            row.addView(key(String.valueOf(ch), 1f, () -> onLetter(ch)));
+        for (char c : letters.toCharArray()) { final char ch = c; row.addView(key(disp(ch), 1f, () -> onLetter(ch))); }
+        return row;
+    }
+    private LinearLayout symRow(String chars) {
+        LinearLayout row = newRow();
+        for (int i = 0; i < chars.length(); i++) {
+            final String s = String.valueOf(chars.charAt(i));
+            row.addView(key(s, 1f, () -> onSymbol(s)));
         }
         return row;
     }
-    private LinearLayout bottomRow() {
-        LinearLayout row = newRow();
-        row.addView(key("⌫", 1.5f, this::onBackspace));
-        row.addView(key("space", 4f, this::onSpace));
-        row.addView(key("↵", 1.5f, this::onEnter));
-        return row;
-    }
-    private LinearLayout newRow() {
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        return row;
-    }
+    private String disp(char ch) { return shift ? String.valueOf(Character.toUpperCase(ch)) : String.valueOf(ch); }
+    private LinearLayout newRow() { LinearLayout r = new LinearLayout(this); r.setOrientation(LinearLayout.HORIZONTAL); return r; }
+
     private Button key(String label, float weight, Runnable action) {
         Button b = new Button(this);
         b.setText(label); b.setAllCaps(false);
         b.setTextColor(Color.parseColor("#e9edef"));
         b.setBackgroundColor(Color.parseColor("#2a3942"));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-            0, LinearLayout.LayoutParams.WRAP_CONTENT, weight);
-        lp.setMargins(3, 3, 3, 3);
-        b.setLayoutParams(lp);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, weight);
+        lp.setMargins(3, 3, 3, 3); b.setLayoutParams(lp);
         b.setOnClickListener(v -> action.run());
         return b;
     }
@@ -93,10 +162,8 @@ public class BurmaKeyService extends InputMethodService {
         bar.removeAllViews();
         if (buf.length() == 0) return;
         cands = engine.size() > 0 ? engine.candidates(buf.toString().toLowerCase()) : null;
-        if (cands != null)
-            for (final int id : cands) bar.addView(candidate(engine.word(id), engine.spelling(id),
-                                                             () -> pickWord(id)));
-        // an always-available "as typed" chip
+        if (cands != null) for (final Engine.Cand c : cands)
+            bar.addView(candidate(c.word, c.spell, () -> pickWord(c.word)));
         bar.addView(candidate(buf.toString(), "as typed", this::pickRaw));
     }
     private View candidate(String big, String small, Runnable action) {
@@ -106,21 +173,25 @@ public class BurmaKeyService extends InputMethodService {
         cell.setPadding(dp(14), dp(6), dp(14), dp(6));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        lp.setMargins(4, 2, 4, 2); cell.setLayoutParams(lp);
-        cell.setMinimumWidth(dp(56));
-        TextView t = new TextView(this);
-        t.setText(big); t.setTextColor(Color.parseColor("#e9edef"));
-        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 19);
-        TextView s = new TextView(this);
-        s.setText(small); s.setTextColor(Color.parseColor("#8696a0"));
-        s.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
+        lp.setMargins(4, 2, 4, 2); cell.setLayoutParams(lp); cell.setMinimumWidth(dp(56));
+        TextView t = new TextView(this); t.setText(big);
+        t.setTextColor(Color.parseColor("#e9edef")); t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 19);
+        TextView s = new TextView(this); s.setText(small);
+        s.setTextColor(Color.parseColor("#8696a0")); s.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
         cell.addView(t); cell.addView(s);
         cell.setOnClickListener(v -> action.run());
         return cell;
     }
 
     // ---- input handling -------------------------------------------------
-    private void onLetter(char ch) { buf.append(ch); drawBar(); }
+    private void onLetter(char ch) {
+        buf.append(shift ? Character.toUpperCase(ch) : ch);
+        if (shift) { shift = false; buildKeys(); }
+        drawBar();
+    }
+    private void onSymbol(String s) { flushBuffer(); commit(s); engine.endMessage(); }
+    private void toggleShift() { shift = !shift; buildKeys(); }
+    private void toggleSymbols() { symbols = !symbols; shift = false; buildKeys(); }
 
     private void onBackspace() {
         if (buf.length() > 0) { buf.deleteCharAt(buf.length() - 1); drawBar(); return; }
@@ -128,21 +199,19 @@ public class BurmaKeyService extends InputMethodService {
         if (ic != null) ic.deleteSurroundingText(1, 0);
     }
     private void onSpace() {
-        if (buf.length() > 0 && cands != null && !cands.isEmpty()) { pickWord(cands.get(0)); return; }
+        if (buf.length() > 0 && cands != null && !cands.isEmpty()) { pickWord(cands.get(0).word); return; }
         if (buf.length() > 0) { pickRaw(); return; }
         commit(" "); engine.endMessage();
     }
-    private void onEnter() {
-        if (buf.length() > 0) { if (cands != null && !cands.isEmpty()) pickWord(cands.get(0)); else pickRaw(); }
-        commit("\n"); engine.endMessage();
+    private void onEnter() { flushBuffer(); commit("\n"); engine.endMessage(); }
+    private void flushBuffer() {
+        if (buf.length() == 0) return;
+        if (cands != null && !cands.isEmpty()) pickWord(cands.get(0).word); else pickRaw();
     }
-    private void pickWord(int id) {
-        String w = engine.word(id);
-        commit(w); engine.learn(w);
-        buf.setLength(0); drawBar();
-    }
+    private void pickWord(String w) { commit(w); if (!noLearn) engine.learn(w); buf.setLength(0); drawBar(); }
     private void pickRaw() {
-        commit(buf.toString()); engine.endMessage();
+        String s = buf.toString();
+        commit(s); if (!noLearn) engine.learnRaw(s, s);   // remember the name/word for next time
         buf.setLength(0); drawBar();
     }
     private void commit(String s) {
@@ -150,7 +219,5 @@ public class BurmaKeyService extends InputMethodService {
         if (ic != null) ic.commitText(s, 1);
     }
 
-    private int dp(int v) {
-        return (int) (v * getResources().getDisplayMetrics().density + 0.5f);
-    }
+    private int dp(int v) { return (int) (v * getResources().getDisplayMetrics().density + 0.5f); }
 }
