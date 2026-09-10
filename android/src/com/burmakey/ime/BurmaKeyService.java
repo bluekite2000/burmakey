@@ -3,6 +3,10 @@ package com.burmakey.ime;
 import android.inputmethodservice.InputMethodService;
 import android.view.View;
 import android.view.MotionEvent;
+import android.view.HapticFeedbackConstants;
+import android.view.KeyEvent;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.inputmethod.EditorInfo;
 import android.text.InputType;
 import android.view.inputmethod.InputConnection;
@@ -25,6 +29,8 @@ public class BurmaKeyService extends InputMethodService {
     private boolean symbols = false;    // number/symbol page
     private boolean noLearn = false;    // password/OTP field: never learn
     private File stateFile;
+    private final Handler repeatHandler = new Handler(Looper.getMainLooper());
+    private Runnable repeatRunnable;
 
     private static final String[] LETTERS = {"qwertyuiop", "asdfghjkl", "zxcvbnm"};
 
@@ -107,13 +113,15 @@ public class BurmaKeyService extends InputMethodService {
         LinearLayout r3 = newRow();
         r3.addView(key(shift ? "⇧" : "⇧", 1.5f, this::toggleShift));
         for (char c : LETTERS[2].toCharArray()) { final char ch = c; r3.addView(key(disp(ch), 1f, () -> onLetter(ch))); }
-        r3.addView(key("⌫", 1.5f, this::onBackspace));
+        r3.addView(key("⌫", 1.5f, this::onBackspace, true));
         keyArea.addView(r3);
         LinearLayout r4 = newRow();
-        r4.addView(key("123", 1.5f, this::toggleSymbols));
-        r4.addView(key("space", 4f, this::onSpace));
+        r4.addView(key("123", 1.3f, this::toggleSymbols));
+        r4.addView(key("←", 1f, () -> moveCursor(KeyEvent.KEYCODE_DPAD_LEFT), true));
+        r4.addView(key("space", 3f, this::onSpace));
+        r4.addView(key("→", 1f, () -> moveCursor(KeyEvent.KEYCODE_DPAD_RIGHT), true));
         r4.addView(key(".", 1f, () -> onSymbol(".")));
-        r4.addView(key("↵", 1.5f, this::onEnter));
+        r4.addView(key("↵", 1.3f, this::onEnter));
         keyArea.addView(r4);
     }
 
@@ -123,12 +131,14 @@ public class BurmaKeyService extends InputMethodService {
         LinearLayout r3 = newRow();
         for (String s : new String[]{"။", "၊", ".", ",", "?", "!", "@", "-"})
             r3.addView(key(s, 1f, () -> onSymbol(s)));
-        r3.addView(key("⌫", 1.5f, this::onBackspace));
+        r3.addView(key("⌫", 1.5f, this::onBackspace, true));
         keyArea.addView(r3);
         LinearLayout r4 = newRow();
-        r4.addView(key("ABC", 1.5f, this::toggleSymbols));
-        r4.addView(key("space", 4f, this::onSpace));
-        r4.addView(key("↵", 1.5f, this::onEnter));
+        r4.addView(key("ABC", 1.3f, this::toggleSymbols));
+        r4.addView(key("←", 1f, () -> moveCursor(KeyEvent.KEYCODE_DPAD_LEFT), true));
+        r4.addView(key("space", 3f, this::onSpace));
+        r4.addView(key("→", 1f, () -> moveCursor(KeyEvent.KEYCODE_DPAD_RIGHT), true));
+        r4.addView(key("↵", 1.3f, this::onEnter));
         keyArea.addView(r4);
     }
 
@@ -151,31 +161,54 @@ public class BurmaKeyService extends InputMethodService {
     private static final int KEY_BG = Color.parseColor("#2a3942");
     private static final int KEY_BG_DOWN = Color.parseColor("#5b6b75");
 
-    private Button key(String label, float weight, Runnable action) {
+    private Button key(String label, float weight, Runnable action) { return key(label, weight, action, false); }
+
+    private Button key(String label, float weight, final Runnable action, final boolean repeatable) {
         Button b = new Button(this);
         b.setText(label); b.setAllCaps(false);
         b.setTextColor(Color.parseColor("#e9edef"));
         b.setBackgroundColor(KEY_BG);
+        b.setHapticFeedbackEnabled(true);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, weight);
         lp.setMargins(3, 3, 3, 3); b.setLayoutParams(lp);
-        b.setOnClickListener(v -> action.run());
-        // brief key "pop" on touch, like a native keyboard
+        if (!repeatable) b.setOnClickListener(v -> action.run());
+        // pop + haptic on touch; repeatable keys fire on press and auto-repeat while held
         b.setOnTouchListener((v, e) -> {
             switch (e.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
+                    v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
                     v.setBackgroundColor(KEY_BG_DOWN);
                     v.setTranslationZ(dp(8));
                     v.animate().scaleX(1.28f).scaleY(1.28f).translationY(-dp(10)).setDuration(35).start();
+                    if (repeatable) { action.run(); startRepeat(action); }
                     break;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
+                    if (repeatable) stopRepeat();
                     v.animate().scaleX(1f).scaleY(1f).translationY(0).setDuration(70)
                      .withEndAction(() -> { v.setBackgroundColor(KEY_BG); v.setTranslationZ(0); }).start();
                     break;
             }
-            return false;   // don't consume — let onClick fire
+            return repeatable;   // repeatable keys consume (fire on down); others let onClick fire on up
         });
         return b;
+    }
+
+    private void startRepeat(final Runnable action) {
+        stopRepeat();
+        repeatRunnable = () -> { action.run(); if (repeatRunnable != null) repeatHandler.postDelayed(repeatRunnable, 55); };
+        repeatHandler.postDelayed(repeatRunnable, 350);   // wait before auto-repeat kicks in
+    }
+    private void stopRepeat() {
+        if (repeatRunnable != null) { repeatHandler.removeCallbacks(repeatRunnable); repeatRunnable = null; }
+    }
+
+    private void moveCursor(int keyCode) {
+        flushBuffer();                       // commit any pending draft before moving the caret
+        InputConnection ic = getCurrentInputConnection();
+        if (ic == null) return;
+        ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, keyCode));
+        ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, keyCode));
     }
 
     // ---- candidate bar --------------------------------------------------

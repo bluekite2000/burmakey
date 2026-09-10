@@ -26,10 +26,13 @@ the 48k-line v4 lexicon ships as an APK asset.
 - [x] number/symbol pages (Latin digits + Burmese numerals ၀-၉ + ။ ၊ punctuation)
 - [x] one-shot shift (uppercase)
 - [x] key-press pop feedback (key lifts + lightens on touch, like a native keyboard)
+- [x] hold-to-repeat backspace
+- [x] haptic feedback on keypress (respects system setting)
+- [x] cursor keys ← → (hold to repeat; commits pending draft first)
 - [x] buffer reset on new field (onStartInputView) — no draft leaks between fields
 - [x] Tier-1 on-device learning: recency + bigram + personal vocab, persisted to files/learn.tsv, pruned to caps
 - [x] secure-field guard — no learning in password / OTP inputs
-- [ ] cursor + selection handling (arrow keys, tap-to-move)
+- [ ] text selection handles (arrow keys done; selection still TODO)
 - [ ] long-press for numbers/accents on the letter page
 
 Next: cursor + selection (arrow keys, tap-to-move) and long-press for
