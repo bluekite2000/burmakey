@@ -10,3 +10,7 @@ weblex_v4.txt
 apks/
 *.log
 __pycache__/
+
+# Android build artifacts
+android/build/
+tf.html
