@@ -14,6 +14,7 @@ rm -rf build && mkdir -p build/compiled build/gen build/classes build/dex
   --manifest AndroidManifest.xml \
   --java build/gen \
   --min-sdk-version 24 --target-sdk-version 34 \
+  -A assets \
   build/compiled/res.zip
 
 # 2. compile Java (app sources + generated R.java) against android.jar

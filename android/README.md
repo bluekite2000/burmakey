@@ -11,18 +11,21 @@ SDK tools so it stays offline and dependency-free.
     adb shell ime enable com.burmakey.ime/.BurmaKeyService
     adb shell ime set    com.burmakey.ime/.BurmaKeyService
 
-Then focus any text field; the keyboard appears. Verified on an Android-34
-emulator: typing produced "hello world" in a Chrome input, character for
-character.
+Then focus any text field. Verified on an Android-34 emulator: typing `nay`
+showed နေ / နေရာ / နေ့ / နေထိုင် / နေမကောင်း in the candidate bar (same ranking
+as the web keyboard); tapping နေ committed U+1014 U+1031 into a Chrome field;
+`dha`+space committed သလား — the voiced variant, via the same multi-spelling
+lexicon. The engine (Engine.java) mirrors the tested logic in src/ and web-my/;
+the 48k-line v4 lexicon ships as an APK asset.
 
 ## Status
 
 - [x] IME registers, appears, commits text into other apps  (this skeleton)
-- [ ] v4 engine ported to Kotlin/Java: Burglish in, Burmese out
-- [ ] suggestion bar + candidate ranking
+- [x] v4 engine ported to Java: Burglish in, Burmese out
+- [x] suggestion bar + candidate ranking
 - [ ] number/symbol pages, shift, cursor + selection, inputType handling
 - [ ] Tier-1 on-device learning + pruning  (see docs/android-learning.md)
 
-The engine port is next: the ranking logic is already specified and tested in
-Python (src/) and JS (web-my/); this is a mechanical translation, not new
-design.
+Next: number/symbol pages, shift, cursor + selection, inputType handling, and
+Tier-1 on-device learning with pruning (docs/android-learning.md). The core —
+type Burglish, get ranked Burmese, commit clean Unicode into any app — works.
