@@ -221,10 +221,13 @@ public class BurmaKeyService extends InputMethodService {
             bar.addView(candidate(c.word, c.spell, () -> pickWord(c.word)));
         bar.addView(candidate(buf.toString(), "as typed", this::pickRaw));
     }
-    private View candidate(String big, String small, Runnable action) {
+    private static final int CAND_BG = Color.parseColor("#17232b");
+    private static final int CAND_BG_DOWN = Color.parseColor("#356f7d");   // highlight when a word is pressed
+
+    private View candidate(String big, String small, final Runnable action) {
         LinearLayout cell = new LinearLayout(this);
         cell.setOrientation(LinearLayout.VERTICAL);
-        cell.setBackgroundColor(Color.parseColor("#17232b"));
+        cell.setBackgroundColor(CAND_BG);
         cell.setPadding(dp(14), dp(6), dp(14), dp(6));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -234,7 +237,22 @@ public class BurmaKeyService extends InputMethodService {
         TextView s = new TextView(this); s.setText(small);
         s.setTextColor(Color.parseColor("#8696a0")); s.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
         cell.addView(t); cell.addView(s);
-        cell.setOnClickListener(v -> action.run());
+        cell.setHapticFeedbackEnabled(true);
+        cell.setOnTouchListener((v, e) -> {
+            switch (e.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+                    v.setBackgroundColor(CAND_BG_DOWN);
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    v.postDelayed(() -> v.setBackgroundColor(CAND_BG), 200);   // safety revert if not picked
+                    break;
+            }
+            return false;   // let onClick fire
+        });
+        // keep the highlight on screen a beat before committing, so the pick is visible
+        cell.setOnClickListener(v -> { v.setBackgroundColor(CAND_BG_DOWN); v.postDelayed(action, 110); });
         return cell;
     }
 
