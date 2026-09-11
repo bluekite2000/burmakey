@@ -14,6 +14,9 @@ properly-licensed Burmese corpus will give cleaner data.
 import os, sys, json, time, urllib.request
 
 KEY   = os.environ.get("DEEPINFRA_API_KEY", "")
+if not KEY:
+    _kf = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".deepinfra_key")
+    if os.path.exists(_kf): KEY = open(_kf).read().strip()
 BASE  = os.environ.get("DEEPINFRA_BASE", "https://api.deepinfra.com/v1/openai")
 MODEL = os.environ.get("DEEPINFRA_MODEL", "deepseek-ai/DeepSeek-V3")   # best Burmese in the bake-off; WizardLM-2-8x22B is a good 2nd source
 PER   = int(sys.argv[1]) if len(sys.argv) > 1 else 200
