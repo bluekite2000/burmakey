@@ -32,6 +32,8 @@ the 48k-line v4 lexicon ships as an APK asset.
 - [x] buffer reset on new field (onStartInputView) — no draft leaks between fields
 - [x] Tier-1 on-device learning: recency + bigram + personal vocab, persisted to files/learn.tsv, pruned to caps
 - [x] secure-field guard — no learning in password / OTP inputs
+- [x] emoji page (😊 key -> 4x8 grid, commits directly)
+- [x] next-word prediction — after a pick, the bar shows likely following words (learned bigrams; fills as you type)
 - [ ] text selection handles (arrow keys done; selection still TODO)
 - [ ] long-press for numbers/accents on the letter page
 

@@ -35,6 +35,7 @@ public class Engine {
     // ---- learned state (persisted) ----
     private final Map<String, Integer> recency = new HashMap<>();
     private final Map<String, Map<String, Integer>> bigram = new HashMap<>();
+    private final Map<String, Map<String, Integer>> baseBigram = new HashMap<>();  // bundled, not persisted
     private final List<String[]> userList = new ArrayList<>();          // {spell, word}
     private final Map<String, List<Integer>> userPref = new HashMap<>();
     private final Set<String> userSeen = new LinkedHashSet<>();
@@ -166,6 +167,37 @@ public class Engine {
             int[] a = pref.get(v);
             if (a != null) for (int id : a) out.add(id);
         }
+        return out;
+    }
+
+    /** Optional bundled next-word table: "head<tab>next1 next2 ..." ordered by frequency. */
+    public void loadBigrams(InputStream in) {
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = r.readLine()) != null) {
+                int tab = line.indexOf('\t');
+                if (tab <= 0) continue;
+                String head = line.substring(0, tab);
+                String[] nexts = line.substring(tab + 1).trim().split("\\s+");
+                Map<String, Integer> m = baseBigram.computeIfAbsent(head, k -> new HashMap<>());
+                for (int i = 0; i < nexts.length; i++)
+                    if (!nexts[i].isEmpty()) m.put(nexts[i], nexts.length - i);   // earlier = higher
+            }
+        } catch (Exception ignored) {}
+    }
+
+    /** Predicted next words after the last committed word: bundled + personally learned. */
+    public List<Cand> nextWords() {
+        if (prev == null) return new ArrayList<>();
+        Map<String, Integer> merged = new HashMap<>();
+        Map<String, Integer> b = baseBigram.get(prev);
+        if (b != null) for (Map.Entry<String, Integer> e : b.entrySet()) merged.merge(e.getKey(), e.getValue(), Integer::sum);
+        Map<String, Integer> l = bigram.get(prev);
+        if (l != null) for (Map.Entry<String, Integer> e : l.entrySet()) merged.merge(e.getKey(), e.getValue() * 8, Integer::sum);
+        List<String> ws = new ArrayList<>(merged.keySet());
+        ws.sort((x, y) -> Integer.compare(merged.get(y), merged.get(x)));
+        List<Cand> out = new ArrayList<>();
+        for (String w : ws) { out.add(new Cand(w, "")); if (out.size() == 6) break; }
         return out;
     }
 

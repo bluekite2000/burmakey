@@ -27,6 +27,7 @@ public class BurmaKeyService extends InputMethodService {
     private List<Engine.Cand> cands;
     private boolean shift = false;      // one-shot uppercase
     private boolean symbols = false;    // number/symbol page
+    private boolean emoji = false;      // emoji page
     private boolean noLearn = false;    // password/OTP field: never learn
     private File stateFile;
     private final Handler repeatHandler = new Handler(Looper.getMainLooper());
@@ -40,6 +41,7 @@ public class BurmaKeyService extends InputMethodService {
         stateFile = new File(getFilesDir(), "learn.tsv");
         try { engine.load(getAssets().open("weblex_v4.txt")); } catch (Exception ignored) {}
         engine.loadState(stateFile);       // remember prior sessions
+        try { engine.loadBigrams(getAssets().open("nextword.txt")); } catch (Exception ignored) {}
     }
 
     @Override
@@ -72,10 +74,10 @@ public class BurmaKeyService extends InputMethodService {
         super.onStartInputView(info, restarting);
         buf.setLength(0);            // never leak a draft between fields
         shift = false;
-        boolean wasSymbols = symbols;
-        symbols = false;
+        boolean wasAlt = symbols || emoji;
+        symbols = false; emoji = false;
         noLearn = isSecure(info);    // no on-device learning in secure fields
-        if (wasSymbols) buildKeys();
+        if (wasAlt) buildKeys();
         drawBar();
     }
 
@@ -104,7 +106,7 @@ public class BurmaKeyService extends InputMethodService {
     // ---- key layouts ----------------------------------------------------
     private void buildKeys() {
         keyArea.removeAllViews();
-        if (symbols) buildSymbols(); else buildLetters();
+        if (emoji) buildEmoji(); else if (symbols) buildSymbols(); else buildLetters();
     }
 
     private void buildLetters() {
@@ -120,7 +122,7 @@ public class BurmaKeyService extends InputMethodService {
         r4.addView(key("←", 1f, () -> moveCursor(KeyEvent.KEYCODE_DPAD_LEFT), true));
         r4.addView(key("space", 3f, this::onSpace));
         r4.addView(key("→", 1f, () -> moveCursor(KeyEvent.KEYCODE_DPAD_RIGHT), true));
-        r4.addView(key(".", 1f, () -> onSymbol(".")));
+        r4.addView(key("🙂", 1f, this::toggleEmoji));
         r4.addView(key("↵", 1.3f, this::onEnter));
         keyArea.addView(r4);
     }
@@ -215,7 +217,11 @@ public class BurmaKeyService extends InputMethodService {
     private void drawBar() {
         if (bar == null) return;
         bar.removeAllViews();
-        if (buf.length() == 0) return;
+        if (buf.length() == 0) {
+            for (final Engine.Cand c : engine.nextWords())
+                bar.addView(candidate(c.word, "", () -> pickWord(c.word)));
+            return;
+        }
         cands = engine.size() > 0 ? engine.candidates(buf.toString().toLowerCase()) : null;
         if (cands != null) for (final Engine.Cand c : cands)
             bar.addView(candidate(c.word, c.spell, () -> pickWord(c.word)));
@@ -264,7 +270,29 @@ public class BurmaKeyService extends InputMethodService {
     }
     private void onSymbol(String s) { flushBuffer(); commit(s); engine.endMessage(); }
     private void toggleShift() { shift = !shift; buildKeys(); }
-    private void toggleSymbols() { symbols = !symbols; shift = false; buildKeys(); }
+    private void toggleSymbols() { symbols = !symbols; emoji = false; shift = false; buildKeys(); }
+    private static final String[] EMOJI = {
+        "😀","😁","😂","🤣","😊","😍","😘","😎",
+        "😭","😢","😅","😉","🥰","😴","🤔","😌",
+        "👍","👎","🙏","❤","🔥","✨","🎉","💯",
+        "😱","👏","🙌","🥳","😜","🤗","🙄","😳"
+    };
+    private void buildEmoji() {
+        for (int r = 0; r < 4; r++) {
+            LinearLayout row = newRow();
+            for (int c = 0; c < 8; c++) { final String e = EMOJI[r * 8 + c]; row.addView(key(e, 1f, () -> onEmoji(e))); }
+            keyArea.addView(row);
+        }
+        LinearLayout r4 = newRow();
+        r4.addView(key("ABC", 1.5f, this::goLetters));
+        r4.addView(key("⌫", 1.5f, this::onBackspace, true));
+        r4.addView(key("space", 4f, this::onSpace));
+        r4.addView(key("↵", 1.5f, this::onEnter));
+        keyArea.addView(r4);
+    }
+    private void onEmoji(String e) { flushBuffer(); commit(e); engine.endMessage(); }
+    private void toggleEmoji() { emoji = !emoji; symbols = false; shift = false; buildKeys(); }
+    private void goLetters() { emoji = false; symbols = false; shift = false; buildKeys(); }
 
     private void onBackspace() {
         if (buf.length() > 0) { buf.deleteCharAt(buf.length() - 1); drawBar(); return; }
