@@ -15,7 +15,7 @@ import os, sys, json, time, urllib.request
 
 KEY   = os.environ.get("DEEPINFRA_API_KEY", "")
 BASE  = os.environ.get("DEEPINFRA_BASE", "https://api.deepinfra.com/v1/openai")
-MODEL = os.environ.get("DEEPINFRA_MODEL", "Qwen/Qwen2.5-72B-Instruct")
+MODEL = os.environ.get("DEEPINFRA_MODEL", "deepseek-ai/DeepSeek-V3")   # best Burmese in the bake-off; WizardLM-2-8x22B is a good 2nd source
 PER   = int(sys.argv[1]) if len(sys.argv) > 1 else 200
 
 TOPICS = [
