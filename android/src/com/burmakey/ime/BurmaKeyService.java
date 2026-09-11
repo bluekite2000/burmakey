@@ -42,6 +42,7 @@ public class BurmaKeyService extends InputMethodService {
         try { engine.load(getAssets().open("weblex_v4.txt")); } catch (Exception ignored) {}
         engine.loadState(stateFile);       // remember prior sessions
         try { engine.loadBigrams(getAssets().open("nextword.txt")); } catch (Exception ignored) {}
+        try { engine.loadSyllables(getAssets().open("syllable.txt")); } catch (Exception ignored) {}
     }
 
     @Override
@@ -225,6 +226,12 @@ public class BurmaKeyService extends InputMethodService {
         cands = engine.size() > 0 ? engine.candidates(buf.toString().toLowerCase()) : null;
         if (cands != null) for (final Engine.Cand c : cands)
             bar.addView(candidate(c.word, c.spell, () -> pickWord(c.word)));
+        // OOV fallback: compose any Burglish into Burmese, offered as an extra chip
+        final String composed = engine.compose(buf.toString().toLowerCase());
+        boolean dup = false;
+        if (cands != null) for (Engine.Cand c : cands) if (c.word.equals(composed)) { dup = true; break; }
+        if (!composed.isEmpty() && !dup)
+            bar.addView(candidate(composed, "compose", () -> pickWord(composed)));
         bar.addView(candidate(buf.toString(), "as typed", this::pickRaw));
     }
     private static final int CAND_BG = Color.parseColor("#17232b");

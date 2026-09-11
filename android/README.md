@@ -34,6 +34,7 @@ the 48k-line v4 lexicon ships as an APK asset.
 - [x] secure-field guard — no learning in password / OTP inputs
 - [x] emoji page (😊 key -> 4x8 grid, commits directly)
 - [x] next-word prediction — after a pick, the bar shows likely following words (learned bigrams; fills as you type)
+- [x] OOV direct composition — any Burglish composes to Burmese syllable-by-syllable (offered as a "compose" chip), so words outside the 48k lexicon are typeable
 - [ ] text selection handles (arrow keys done; selection still TODO)
 - [ ] long-press for numbers/accents on the letter page
 

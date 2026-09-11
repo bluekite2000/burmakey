@@ -15,3 +15,6 @@ __pycache__/
 android/build/
 tf.html
 android/assets/weblex_v4.txt
+kbdemo.html
+android/assets/syllable.txt
+src/syllable.txt

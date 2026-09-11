@@ -36,6 +36,8 @@ public class Engine {
     private final Map<String, Integer> recency = new HashMap<>();
     private final Map<String, Map<String, Integer>> bigram = new HashMap<>();
     private final Map<String, Map<String, Integer>> baseBigram = new HashMap<>();  // bundled, not persisted
+    private final Map<String, String> syl = new HashMap<>();   // roman syllable -> Burmese (OOV)
+    private String[] sylKeys = new String[0];                  // syllable keys, longest first
     private final List<String[]> userList = new ArrayList<>();          // {spell, word}
     private final Map<String, List<Integer>> userPref = new HashMap<>();
     private final Set<String> userSeen = new LinkedHashSet<>();
@@ -168,6 +170,50 @@ public class Engine {
             if (a != null) for (int id : a) out.add(id);
         }
         return out;
+    }
+
+    /** roman-syllable -> Burmese table used to compose out-of-vocabulary words. */
+    public void loadSyllables(InputStream in) {
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = r.readLine()) != null) {
+                int bar = line.indexOf('|');
+                if (bar > 0) syl.put(line.substring(0, bar), line.substring(bar + 1));
+            }
+        } catch (Exception ignored) {}
+        List<String> ks = new ArrayList<>(syl.keySet());
+        ks.sort((a, b) -> b.length() - a.length());
+        sylKeys = ks.toArray(new String[0]);
+    }
+
+    // Burglish -> the MLC-ish roman the syllable table is keyed on (order matters)
+    private static final String[][] NORM = {
+        {"aung","aun"},{"oung","oun"},{"aing","ain"},{"eing","ein"},{"uing","uin"},
+        {"oaing","ain"},{"aik","ai"},
+        {"uu","u"},{"ee","i"},{"oo","u"},
+        {"ay","ei"},{"ai","ei"},
+        {"aw","o"},
+    };
+    private String normOOV(String s) {
+        s = s.toLowerCase();
+        for (String[] p : NORM) s = s.replace(p[0], p[1]);
+        return s;
+    }
+
+    /** Compose any Burglish string into Burmese, syllable by syllable (OOV fallback). */
+    public String compose(String burglish) {
+        if (sylKeys.length == 0 || burglish.isEmpty()) return "";
+        String s = normOOV(burglish);
+        StringBuilder out = new StringBuilder();
+        boolean any = false;
+        int i = 0;
+        while (i < s.length()) {
+            String m = null;
+            for (String k : sylKeys) { if (s.startsWith(k, i)) { m = k; break; } }
+            if (m != null) { out.append(syl.get(m)); i += m.length(); any = true; }
+            else { out.append(s.charAt(i)); i++; }
+        }
+        return any ? out.toString() : "";
     }
 
     /** Optional bundled next-word table: "head<tab>next1 next2 ..." ordered by frequency. */
