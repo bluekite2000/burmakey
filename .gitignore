@@ -18,3 +18,6 @@ android/assets/weblex_v4.txt
 kbdemo.html
 android/assets/syllable.txt
 src/syllable.txt
+android/assets/nextword.txt
+src/nextword.txt
+src/corpus.txt
